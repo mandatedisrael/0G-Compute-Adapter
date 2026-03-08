@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windsurf &mdash; 0G Compute Adapter</title>
+<meta name="description" content="How to use 0G Compute Adapter with Windsurf IDE. Configure Cascade and all AI features to use 0G Network models.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 248 120'%3E%3Cpath d='M247.994 63.4189C246.43 94.8449 220.164 119.85 187.993 119.85C154.815 119.85 127.918 93.2547 127.918 60.4481C127.918 27.6413 154.815 1.04688 187.993 1.04688C219.144 1.04688 244.758 24.491 247.772 54.5085H220.49C217.665 39.3007 204.19 27.7779 187.994 27.7779C169.745 27.7779 154.952 42.4049 154.952 60.4481C154.952 78.4922 169.745 93.1192 187.994 93.1192C202.003 93.1192 213.974 84.498 218.782 72.3291H172.974V63.4189H247.994Z' fill='%237c3aed'/%3E%3Cpath d='M19.7719 104.311C43.3526 125.438 79.8058 124.755 102.555 102.262C126.015 79.064 126.015 41.4537 102.555 18.2555C79.0936-4.94194 41.0564-4.94194 17.5956 18.2555C-4.43161 40.0359-5.77756 74.5211 13.5575 97.8546L32.8486 78.78C23.9713 66.0513 25.2587 48.4817 36.7116 37.1576C49.6149 24.3986 70.5357 24.3986 83.4394 37.1576C96.3419 49.9163 96.3419 70.6022 83.4394 83.3611C73.5328 93.1562 58.9014 95.4318 46.7999 90.1865L79.1909 58.1583L72.8191 51.8587L19.7719 104.311Z' fill='%237c3aed'/%3E%3C/svg%3E">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+:root{
+  --bg:#050507;--bg2:#0a0a0e;--card:#0e0e13;
+  --border:#19191f;--border2:#242430;
+  --text:#dcdce4;--text2:#8e8ea0;--dim:#55556a;
+  --accent:#7c3aed;--accent2:#a78bfa;--accent-bg:rgba(124,58,237,0.06);
+  --green:#10b981;--green-bg:rgba(16,185,129,0.08);--green2:#34d399;
+  --red:#f43f5e;--blue:#3b82f6;--blue-bg:rgba(59,130,246,0.06);
+  --orange:#f59e0b;--orange-bg:rgba(245,158,11,0.06);
+  --mono:'JetBrains Mono','SF Mono','Fira Code',monospace;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --r:3px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--accent);color:white}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+a{color:var(--accent2);text-decoration:none;transition:color .15s}
+a:hover{color:#c4b5fd}
+.container{max-width:1100px;margin:0 auto;padding:0 28px}
+
+/* -- Nav -- */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border)}
+nav .inner{max-width:1100px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px;color:var(--text)}
+.logo svg{height:20px;width:auto}
+.logo span{font-family:var(--mono);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1.5px}
+nav .links{display:flex;gap:24px;align-items:center}
+nav .links a{color:var(--dim);font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.5px}
+nav .links a:hover{color:var(--text)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);font-family:var(--mono);font-size:13px;font-weight:600;transition:all .15s;border:none;cursor:pointer;letter-spacing:.3px}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{background:var(--accent2);color:#fff}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent2)}
+
+/* -- Page -- */
+.page-header{padding:100px 0 40px;text-align:center}
+.page-header .tool-logo{width:56px;height:56px;border-radius:var(--r);background:rgba(255,255,255,.9);padding:6px;margin:0 auto 16px}
+.page-header .tool-type{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:6px}
+.page-header h1{font-family:var(--sans);font-size:clamp(1.4rem,3vw,2rem);font-weight:800;letter-spacing:-.01em;margin-bottom:8px}
+.page-header h1 .accent{color:var(--accent2)}
+.page-header .sub{font-size:14px;color:var(--text2);max-width:500px;margin:0 auto}
+.back-link{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;color:var(--dim);letter-spacing:.5px;margin-bottom:20px;transition:color .15s}
+.back-link:hover{color:var(--accent2)}
+
+/* -- Content -- */
+.content{max-width:760px;margin:0 auto;padding:0 28px 80px}
+.content section{margin-bottom:48px}
+.sec-label{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:8px}
+.sec-title{font-size:clamp(1.2rem,2.5vw,1.5rem);font-weight:800;margin-bottom:16px;letter-spacing:-.01em}
+
+/* -- Card -- */
+.card{background:var(--card);border:1px solid var(--border);border-left:2px solid var(--accent);border-radius:var(--r);padding:20px;margin-bottom:16px}
+.card-head{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.card p{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:10px}
+.card p:last-child{margin-bottom:0}
+.card code{font-family:var(--mono);font-size:13px;background:var(--bg);padding:2px 7px;border-radius:var(--r);color:var(--accent2);border:1px solid var(--border)}
+.card.green{border-left-color:var(--green)}
+.card.blue{border-left-color:var(--blue)}
+.card.orange{border-left-color:var(--orange)}
+
+/* -- Table -- */
+.p-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;margin-top:12px}
+.p-table th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg)}
+.p-table td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text2)}
+.p-table td:first-child{font-weight:600;color:var(--text)}
+.p-table td code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:2px 6px;border-radius:var(--r);color:var(--accent2);border:1px solid var(--border)}
+
+/* -- Step -- */
+.step{display:flex;gap:14px;margin-bottom:20px}
+.step-num{flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--accent-bg);border:1px solid rgba(124,58,237,.2);border-radius:var(--r);font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent2)}
+.step-body{flex:1}
+.step-body h3{font-size:14px;font-weight:700;margin-bottom:4px}
+.step-body p{font-size:13px;color:var(--text2);line-height:1.6}
+
+/* -- Footer -- */
+footer{border-top:1px solid var(--border);padding:28px 0;text-align:center}
+footer .links{display:flex;gap:20px;justify-content:center;margin-bottom:10px;flex-wrap:wrap}
+footer .links a{color:var(--dim);font-family:var(--mono);font-size:12px;letter-spacing:.5px}
+footer .links a:hover{color:var(--text)}
+footer .copy{color:var(--dim);font-family:var(--mono);font-size:11px;letter-spacing:.3px}
+
+/* -- Responsive -- */
+@media(max-width:768px){
+  nav .links{display:none}
+  .page-header h1{font-size:1.4rem}
+  .p-table{font-size:11px}
+  .p-table th,.p-table td{padding:6px 8px}
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="inner">
+    <a href="index.html" class="logo">
+      <svg viewBox="0 0 248 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M247.994 63.4189C246.43 94.8449 220.164 119.85 187.993 119.85C154.815 119.85 127.918 93.2547 127.918 60.4481C127.918 27.6413 154.815 1.04688 187.993 1.04688C219.144 1.04688 244.758 24.491 247.772 54.5085H220.49C217.665 39.3007 204.19 27.7779 187.994 27.7779C169.745 27.7779 154.952 42.4049 154.952 60.4481C154.952 78.4922 169.745 93.1192 187.994 93.1192C202.003 93.1192 213.974 84.498 218.782 72.3291H172.974V63.4189H247.994Z" fill="#7c3aed"/>
+        <path d="M19.7719 104.311C43.3526 125.438 79.8058 124.755 102.555 102.262C126.015 79.064 126.015 41.4537 102.555 18.2555C79.0936-4.94194 41.0564-4.94194 17.5956 18.2555C-4.43161 40.0359-5.77756 74.5211 13.5575 97.8546L32.8486 78.78C23.9713 66.0513 25.2587 48.4817 36.7116 37.1576C49.6149 24.3986 70.5357 24.3986 83.4394 37.1576C96.3419 49.9163 96.3419 70.6022 83.4394 83.3611C73.5328 93.1562 58.9014 95.4318 46.7999 90.1865L79.1909 58.1583L72.8191 51.8587L19.7719 104.311Z" fill="#7c3aed"/>
+      </svg>
+      <span>Compute Adapter</span>
+    </a>
+    <div class="links">
+      <a href="index.html#pricing">Pricing</a>
+      <a href="index.html#integrations">Integrations</a>
+      <a href="index.html#features">Features</a>
+      <a href="index.html#dashboard">Dashboard</a>
+      <a href="https://github.com/claraverse/og-proxy" class="btn btn-outline">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="container">
+    <a href="index.html" class="back-link">&larr; Back to all integrations</a>
+    <img src="https://raw.githubusercontent.com/Exafunction/codeium.vim/main/windsurf.png" alt="Windsurf" class="tool-logo">
+    <div class="tool-type">IDE</div>
+    <h1>Using 0G Compute Adapter with <span class="accent">Windsurf</span></h1>
+    <p class="sub">Configure Windsurf's Cascade agent and all AI features to use 0G Network models.</p>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+  <!-- Setup -->
+  <section>
+    <div class="sec-label">Setup</div>
+    <div class="sec-title">Configure Windsurf</div>
+
+    <div class="card">
+      <div class="card-head">Step 1 &mdash; Open Settings</div>
+      <p>Click the gear icon in the bottom-left corner, or press <code>Cmd + ,</code> (macOS) / <code>Ctrl + ,</code> (Windows/Linux).</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head">Step 2 &mdash; Configure AI Provider</div>
+      <p>Search for "ai provider" or "openai" in settings, then configure the following values:</p>
+      <table class="p-table">
+        <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Provider</td><td><code>OpenAI Compatible</code></td></tr>
+          <tr><td>API Key</td><td><code>sk-0g-your-api-key</code></td></tr>
+          <tr><td>Base URL</td><td><code>http://localhost:8000/v1</code></td></tr>
+          <tr><td>Model</td><td><code>zai-org/GLM-5-FP8</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card green">
+      <div class="card-head">Step 3 &mdash; Save and Use</div>
+      <p>Click Save. The 0G models are now available in Windsurf's Cascade agent and all AI features.</p>
+    </div>
+  </section>
+
+  <!-- Recommended Models -->
+  <section>
+    <div class="sec-label">Models</div>
+    <div class="sec-title">Recommended Models</div>
+
+    <div class="card blue">
+      <table class="p-table">
+        <thead><tr><th>Use Case</th><th>Model</th></tr></thead>
+        <tbody>
+          <tr><td>Cascade (agentic)</td><td><code>zai-org/GLM-5-FP8</code></td></tr>
+          <tr><td>Code generation</td><td><code>deepseek/deepseek-chat-v3-0324</code></td></tr>
+          <tr><td>General purpose</td><td><code>openai/gpt-oss-120b</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Troubleshooting -->
+  <section>
+    <div class="sec-label">Troubleshooting</div>
+    <div class="sec-title">Common Issues</div>
+
+    <div class="card orange">
+      <table class="p-table">
+        <thead><tr><th>Issue</th><th>Solution</th></tr></thead>
+        <tbody>
+          <tr><td>"Connection refused"</td><td>Verify adapter is running on the configured port</td></tr>
+          <tr><td>Models not showing</td><td>Ensure Base URL ends with <code>/v1</code></td></tr>
+          <tr><td>Slow responses</td><td>Normal for first request &mdash; 0G provider connection is being established</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <div class="links">
+      <a href="https://github.com/claraverse/og-proxy">GITHUB</a>
+      <a href="https://github.com/claraverse/og-proxy#api-reference">API DOCS</a>
+      <a href="https://0g.ai">0G NETWORK</a>
+      <a href="https://claraverse.ai">CLARAVERSE</a>
+    </div>
+    <div class="copy">Built by <a href="https://claraverse.ai">Claraverse</a> &bull; Powered by <a href="https://0g.ai">0G Network</a> &bull; MIT License</div>
+  </div>
+</footer>
+
+</body>
+</html>

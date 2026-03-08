@@ -1,0 +1,39 @@
+{
+  "name": "og-proxy",
+  "version": "1.0.0",
+  "description": "Drop-in OpenAI API replacement powered by the 0G decentralized AI network. Adds tool calling, structured output, vision, and streaming to any 0G model.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "openai",
+    "proxy",
+    "0g",
+    "decentralized",
+    "ai",
+    "llm",
+    "api",
+    "tool-calling",
+    "streaming"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/claraverse/og-proxy"
+  },
+  "homepage": "https://github.com/claraverse/og-proxy#readme",
+  "bugs": {
+    "url": "https://github.com/claraverse/og-proxy/issues"
+  },
+  "dependencies": {
+    "@0glabs/0g-serving-broker": "^0.7.2",
+    "ethers": "^6.9.0",
+    "express": "^4.18.2"
+  }
+}

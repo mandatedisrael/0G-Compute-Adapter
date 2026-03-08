@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5">
+<title>0G Compute Adapter — Cut AI Coding Costs by 90%</title>
+<meta name="description" content="Drop-in OpenAI proxy for the 0G Network. Use GLM-5, DeepSeek V3 in Cursor, Claude Code, Aider and save 90% on AI costs.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 248 120'%3E%3Cpath d='M247.994 63.4189C246.43 94.8449 220.164 119.85 187.993 119.85C154.815 119.85 127.918 93.2547 127.918 60.4481C127.918 27.6413 154.815 1.04688 187.993 1.04688C219.144 1.04688 244.758 24.491 247.772 54.5085H220.49C217.665 39.3007 204.19 27.7779 187.994 27.7779C169.745 27.7779 154.952 42.4049 154.952 60.4481C154.952 78.4922 169.745 93.1192 187.994 93.1192C202.003 93.1192 213.974 84.498 218.782 72.3291H172.974V63.4189H247.994Z' fill='%237c3aed'/%3E%3Cpath d='M19.7719 104.311C43.3526 125.438 79.8058 124.755 102.555 102.262C126.015 79.064 126.015 41.4537 102.555 18.2555C79.0936-4.94194 41.0564-4.94194 17.5956 18.2555C-4.43161 40.0359-5.77756 74.5211 13.5575 97.8546L32.8486 78.78C23.9713 66.0513 25.2587 48.4817 36.7116 37.1576C49.6149 24.3986 70.5357 24.3986 83.4394 37.1576C96.3419 49.9163 96.3419 70.6022 83.4394 83.3611C73.5328 93.1562 58.9014 95.4318 46.7999 90.1865L79.1909 58.1583L72.8191 51.8587L19.7719 104.311Z' fill='%237c3aed'/%3E%3C/svg%3E">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+:root{
+  --bg:#050507;--bg2:#0a0a0e;--card:#0e0e13;
+  --border:#19191f;--border2:#242430;
+  --text:#dcdce4;--text2:#8e8ea0;--dim:#55556a;
+  --accent:#7c3aed;--accent2:#a78bfa;--accent-bg:rgba(124,58,237,0.06);
+  --green:#10b981;--green-bg:rgba(16,185,129,0.08);--green2:#34d399;
+  --red:#f43f5e;--blue:#3b82f6;--blue-bg:rgba(59,130,246,0.06);
+  --orange:#f59e0b;--orange-bg:rgba(245,158,11,0.06);
+  --mono:'JetBrains Mono','SF Mono','Fira Code',monospace;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --r:3px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--accent);color:white}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+a{color:var(--accent2);text-decoration:none;transition:color .15s}
+a:hover{color:#c4b5fd}
+.container{max-width:1100px;margin:0 auto;padding:0 20px}
+
+/* ── Animations ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+@keyframes slideLeft{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+/* Scroll reveal */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-left{opacity:0;transform:translateX(-24px);transition:opacity .6s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1)}
+.reveal-left.visible{opacity:1;transform:translateX(0)}
+.reveal-right{opacity:0;transform:translateX(24px);transition:opacity .6s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1)}
+.reveal-right.visible{opacity:1;transform:translateX(0)}
+.reveal-scale{opacity:0;transform:scale(.92);transition:opacity .5s cubic-bezier(.16,1,.3,1),transform .5s cubic-bezier(.16,1,.3,1)}
+.reveal-scale.visible{opacity:1;transform:scale(1)}
+
+/* ── Nav ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(5,5,7,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border);animation:fadeIn .5s ease}
+nav .inner{max-width:1100px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px;color:var(--text)}
+.logo svg{height:20px;width:auto}
+.logo span{font-family:var(--mono);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1.5px}
+nav .links{display:flex;gap:20px;align-items:center}
+nav .links a{color:var(--dim);font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.5px}
+nav .links a:hover{color:var(--text)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);font-family:var(--mono);font-size:13px;font-weight:600;transition:all .15s;border:none;cursor:pointer;letter-spacing:.3px}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{background:var(--accent2);color:#fff;transform:translateY(-1px)}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent2)}
+
+/* ── Hero (fits viewport) ── */
+.hero{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative;padding:60px 20px 24px;overflow:hidden}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:800px;height:600px;background:radial-gradient(ellipse,rgba(124,58,237,.08) 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:4px 14px;background:var(--accent-bg);border:1px solid var(--border2);border-left:2px solid var(--green);font-family:var(--mono);font-size:12px;color:var(--green);letter-spacing:.5px;margin-bottom:20px;animation:fadeUp .6s ease both}
+.hero-badge .dot{width:5px;height:5px;background:var(--green);animation:blink 2s step-end infinite}
+.hero h1{font-family:var(--sans);font-size:clamp(1.6rem,4.5vw,3rem);font-weight:800;line-height:1.15;margin-bottom:12px;letter-spacing:-.02em;animation:fadeUp .6s ease .1s both}
+.hero h1 .accent{color:var(--accent2)}
+.hero .sub{font-size:clamp(13px,2vw,15px);color:var(--text2);max-width:520px;margin:0 auto 24px;line-height:1.7;animation:fadeUp .6s ease .2s both}
+.hero-buttons{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;animation:fadeUp .6s ease .3s both}
+
+/* ── Hero tool strip ── */
+.hero-tools{width:100%;max-width:1000px;margin:28px auto 0;animation:fadeUp .7s ease .45s both}
+.hero-tools-label{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:12px}
+.hero-tools-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.hero-tool{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:8px 14px;cursor:pointer;color:var(--text);transition:all .2s;text-decoration:none;border-left:2px solid transparent}
+.hero-tool:hover{border-left-color:var(--accent);border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 20px rgba(124,58,237,.12);color:var(--text)}
+.hero-tool img{height:22px;width:auto;object-fit:contain;flex-shrink:0}
+.hero-tool img.icon-bg{height:24px;width:24px;border-radius:4px;background:rgba(255,255,255,.9);padding:2px}
+.hero-tool img.icon-dark{height:24px;width:24px;border-radius:4px;background:rgba(30,30,40,.95);padding:2px}
+.hero-tool .t-name{font-family:var(--mono);font-weight:600;font-size:12px;letter-spacing:.3px;white-space:nowrap}
+
+/* stagger hero tool animations */
+.hero-tool{opacity:0;animation:scaleIn .4s cubic-bezier(.16,1,.3,1) both}
+.hero-tool:nth-child(1){animation-delay:.5s}
+.hero-tool:nth-child(2){animation-delay:.55s}
+.hero-tool:nth-child(3){animation-delay:.6s}
+.hero-tool:nth-child(4){animation-delay:.65s}
+.hero-tool:nth-child(5){animation-delay:.7s}
+.hero-tool:nth-child(6){animation-delay:.75s}
+.hero-tool:nth-child(7){animation-delay:.8s}
+.hero-tool:nth-child(8){animation-delay:.85s}
+.hero-tool:nth-child(9){animation-delay:.9s}
+.hero-tool:nth-child(10){animation-delay:.95s}
+.hero-tool:nth-child(11){animation-delay:1s}
+.hero-tool:nth-child(12){animation-delay:1.05s}
+.hero-tool:nth-child(13){animation-delay:1.1s}
+
+/* ── Stats row ── */
+.stats-row{display:flex;gap:1px;background:var(--border);border:1px solid var(--border);overflow:hidden;max-width:800px;margin:0 auto}
+.stat-item{flex:1;background:var(--card);padding:14px 16px;position:relative;text-align:center}
+.stat-item::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.stat-item:nth-child(1)::after{background:var(--accent)}
+.stat-item:nth-child(2)::after{background:var(--blue)}
+.stat-item:nth-child(3)::after{background:var(--green)}
+.stat-item:nth-child(4)::after{background:var(--orange)}
+.stat-label{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin-bottom:2px}
+.stat-value{font-family:var(--mono);font-size:22px;font-weight:800;letter-spacing:-1px}
+
+/* ── Screenshot ── */
+.screenshot{padding:32px 0 64px;text-align:center}
+.screenshot img{width:100%;max-width:1000px;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,.6)}
+
+/* ── Section ── */
+section{padding:64px 0}
+.sec-label{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:8px}
+.sec-title{font-size:clamp(1.3rem,3vw,2rem);font-weight:800;margin-bottom:8px;letter-spacing:-.01em}
+.sec-desc{font-size:14px;color:var(--text2);max-width:500px;margin-bottom:32px}
+.center{text-align:center}
+.center .sec-desc{margin-left:auto;margin-right:auto}
+
+/* ── Card ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.card-head{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+
+/* ── Pricing ── */
+.pricing-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:880px;margin:0 auto}
+.pricing-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:24px;position:relative}
+.pricing-card.hl{border-left:2px solid var(--accent)}
+.pricing-card h3{font-family:var(--mono);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+.pricing-card .sub{font-family:var(--mono);font-size:12px;color:var(--dim);margin-bottom:16px}
+.p-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px}
+.p-table th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);padding:6px 0;border-bottom:1px solid var(--border)}
+.p-table td{padding:8px 0;border-bottom:1px solid var(--border);color:var(--text2)}
+.p-table .m{font-weight:600;color:var(--text)}
+.p-table .g{color:var(--green2)}
+.p-table .d{color:var(--dim)}
+.savings-bar{background:var(--card);border:1px solid var(--border);border-left:2px solid var(--green);padding:20px 24px;text-align:center;margin-top:20px;max-width:880px;margin-left:auto;margin-right:auto}
+.savings-bar .big{font-family:var(--mono);font-size:28px;font-weight:800;color:var(--green2);letter-spacing:-1px}
+.savings-bar p{font-family:var(--mono);font-size:12px;color:var(--dim);margin-top:4px;letter-spacing:.3px}
+
+/* ── Integrations (full section) ── */
+.int-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;max-width:880px;margin:0 auto}
+.int-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:28px 16px;text-align:center;transition:all .2s;border-left:2px solid var(--border2);cursor:pointer;color:var(--text)}
+.int-card:hover{border-left-color:var(--accent);border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(124,58,237,.1)}
+.int-card img{width:56px;height:56px;margin-bottom:12px;border-radius:8px;background:rgba(255,255,255,.9);padding:6px;object-fit:contain}
+.int-card img.dark-logo{background:rgba(30,30,40,.95)}
+.int-card img.native{background:none;padding:0;width:auto;height:40px;max-width:120px;border-radius:0}
+.int-card .name{font-family:var(--mono);font-weight:700;font-size:14px;letter-spacing:.3px}
+.int-card .type{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:4px;text-transform:uppercase;letter-spacing:1.5px}
+
+/* ── Features ── */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.feat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;border-left:2px solid var(--border2);transition:border-left-color .15s}
+.feat-card:hover{border-left-color:var(--accent)}
+.feat-card .icon{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent2);margin-bottom:8px}
+.feat-card h3{font-size:14px;font-weight:700;margin-bottom:4px}
+.feat-card p{font-size:13px;color:var(--text2);line-height:1.5}
+
+/* ── Code ── */
+.code-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.code-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.code-head{padding:10px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim)}
+.code-box pre{padding:16px;font-family:var(--mono);font-size:13px;line-height:1.7;overflow-x:auto;color:var(--text2)}
+.code-box .kw{color:#ff7b72}
+.code-box .fn{color:#d2a8ff}
+.code-box .str{color:#a5d6ff}
+.code-box .cm{color:var(--dim)}
+
+/* ── Gallery ── */
+.gallery{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:28px}
+.gallery-item{position:relative;overflow:hidden;border:1px solid var(--border);border-radius:var(--r);transition:border-color .15s;cursor:pointer}
+.gallery-item:hover{border-color:var(--accent)}
+.gallery-item img{width:100%;display:block}
+.gallery-item .label{position:absolute;bottom:0;left:0;right:0;padding:10px 14px;background:linear-gradient(transparent,rgba(5,5,7,.95));font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text2)}
+
+/* ── Architecture ── */
+.arch{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:32px;text-align:center;max-width:760px;margin:0 auto}
+.arch-flow{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:16px 0}
+.arch-box{padding:14px 20px;border-radius:var(--r);font-family:var(--mono);font-weight:600;font-size:13px;min-width:140px;text-align:center;letter-spacing:.3px}
+.arch-box.app{background:var(--blue-bg);border:1px solid rgba(59,130,246,.2);color:var(--blue)}
+.arch-box.proxy{background:var(--accent-bg);border:1px solid rgba(124,58,237,.2);border-left:2px solid var(--accent);color:var(--accent2)}
+.arch-box.network{background:var(--green-bg);border:1px solid rgba(16,185,129,.2);color:var(--green2)}
+.arch-arrow{color:var(--dim);font-family:var(--mono);font-size:16px}
+.arch-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.arch-tags span{padding:3px 10px;font-family:var(--mono);font-size:11px;background:var(--bg);border:1px solid var(--border);color:var(--dim);text-transform:uppercase;letter-spacing:1px;font-weight:500}
+
+/* ── CTA ── */
+.cta{text-align:center;padding:80px 0;position:relative}
+.cta h2{font-size:clamp(1.6rem,3vw,2.2rem);font-weight:800;margin-bottom:12px;letter-spacing:-.01em}
+.cta p{color:var(--text2);font-size:14px;max-width:400px;margin:0 auto 24px}
+
+/* ── Footer ── */
+footer{border-top:1px solid var(--border);padding:28px 0;text-align:center}
+footer .links{display:flex;gap:20px;justify-content:center;margin-bottom:10px;flex-wrap:wrap}
+footer .links a{color:var(--dim);font-family:var(--mono);font-size:12px;letter-spacing:.5px}
+footer .links a:hover{color:var(--text)}
+footer .copy{color:var(--dim);font-family:var(--mono);font-size:11px;letter-spacing:.3px}
+
+/* ── Responsive ── */
+@media(max-width:1024px){
+  .int-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .feat-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:768px){
+  nav .links a:not(.btn){display:none}
+  .container{padding:0 16px}
+  .pricing-grid,.code-grid,.gallery{grid-template-columns:1fr}
+  .feat-grid{grid-template-columns:1fr}
+  .stats-row{flex-direction:column}
+  .stat-item{padding:10px 16px}
+  .stat-value{font-size:20px}
+  .arch-flow{flex-direction:column}
+  .arch-arrow{transform:rotate(90deg)}
+  .hero{padding:50px 16px 20px;min-height:100dvh}
+  .hero h1{font-size:clamp(1.4rem,6vw,1.8rem)}
+  .hero .sub{font-size:13px;margin-bottom:16px}
+  .hero-buttons .btn{padding:7px 14px;font-size:12px}
+  .hero-tools{margin-top:20px}
+  .hero-tools-grid{gap:6px}
+  .hero-tool{padding:6px 10px;gap:6px}
+  .hero-tool .t-name{font-size:11px}
+  .hero-tool img,.hero-tool img.icon-bg,.hero-tool img.icon-dark{height:18px;width:auto}
+  .hero-tool img.icon-bg,.hero-tool img.icon-dark{width:20px;height:20px}
+  .int-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .int-card{padding:20px 12px}
+  .int-card img{width:44px;height:44px}
+  .int-card img.native{height:30px}
+  .int-card .name{font-size:12px}
+  section{padding:48px 0}
+  .sec-title{font-size:1.3rem}
+  .savings-bar .big{font-size:22px}
+}
+@media(max-width:480px){
+  .hero h1{font-size:1.3rem}
+  .hero .sub{font-size:12px;max-width:300px}
+  .hero-buttons{gap:8px}
+  .hero-tools-grid{gap:5px}
+  .hero-tool{padding:5px 8px}
+  .hero-tool .t-name{font-size:10px}
+  .int-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .int-card{padding:16px 10px}
+  .int-card img{width:36px;height:36px;margin-bottom:8px}
+  .int-card img.native{height:24px}
+  .int-card .name{font-size:11px}
+  .int-card .type{font-size:9px}
+  .stats-row{margin:0 -16px;border-left:none;border-right:none}
+  .pricing-card{padding:16px}
+  .p-table{font-size:11px}
+  .feat-card{padding:16px}
+  .code-box pre{font-size:11px;padding:12px}
+}
+@media(max-width:360px){
+  .hero-tool .t-name{display:none}
+  .hero-tool{padding:6px}
+  .int-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="inner">
+    <a href="#" class="logo">
+      <svg viewBox="0 0 248 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M247.994 63.4189C246.43 94.8449 220.164 119.85 187.993 119.85C154.815 119.85 127.918 93.2547 127.918 60.4481C127.918 27.6413 154.815 1.04688 187.993 1.04688C219.144 1.04688 244.758 24.491 247.772 54.5085H220.49C217.665 39.3007 204.19 27.7779 187.994 27.7779C169.745 27.7779 154.952 42.4049 154.952 60.4481C154.952 78.4922 169.745 93.1192 187.994 93.1192C202.003 93.1192 213.974 84.498 218.782 72.3291H172.974V63.4189H247.994Z" fill="#7c3aed"/>
+        <path d="M19.7719 104.311C43.3526 125.438 79.8058 124.755 102.555 102.262C126.015 79.064 126.015 41.4537 102.555 18.2555C79.0936-4.94194 41.0564-4.94194 17.5956 18.2555C-4.43161 40.0359-5.77756 74.5211 13.5575 97.8546L32.8486 78.78C23.9713 66.0513 25.2587 48.4817 36.7116 37.1576C49.6149 24.3986 70.5357 24.3986 83.4394 37.1576C96.3419 49.9163 96.3419 70.6022 83.4394 83.3611C73.5328 93.1562 58.9014 95.4318 46.7999 90.1865L79.1909 58.1583L72.8191 51.8587L19.7719 104.311Z" fill="#7c3aed"/>
+      </svg>
+      <span>Compute Adapter</span>
+    </a>
+    <div class="links">
+      <a href="#pricing">Pricing</a>
+      <a href="#integrations">Integrations</a>
+      <a href="#features">Features</a>
+      <a href="#dashboard">Dashboard</a>
+      <a href="https://github.com/claraverse/og-proxy" class="btn btn-outline">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero (viewport-fit) -->
+<section class="hero">
+  <div class="hero-badge"><span class="dot"></span> LIVE ON 0G MAINNET</div>
+  <h1>Cut your AI coding costs<br><span class="accent">by up to 90%</span></h1>
+  <p class="sub">Drop-in OpenAI proxy that routes every AI dev tool through the 0G Network. Same workflow, 10x cheaper.</p>
+  <div class="hero-buttons">
+    <a href="https://github.com/claraverse/og-proxy" class="btn btn-accent">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GET STARTED
+    </a>
+    <a href="#pricing" class="btn btn-outline">SEE PRICING</a>
+  </div>
+
+  <!-- Tool strip in hero -->
+  <div class="hero-tools">
+    <div class="hero-tools-label">Works with 13+ tools</div>
+    <div class="hero-tools-grid">
+      <a href="https://claraverse.space" target="_blank" class="hero-tool" style="border-left-color:var(--accent);background:var(--accent-bg)">
+        <img src="../assets/claraverse-logo.png" alt="Claraverse">
+        <span class="t-name">Try Claraverse</span>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--accent2);margin-left:2px">&rarr;</span>
+      </a>
+      <a href="claude-code.html" class="hero-tool">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/claudecode-1.svg" alt="Claude Code">
+        <span class="t-name">Claude Code</span>
+      </a>
+      <a href="opencode.html" class="hero-tool">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/opencode.svg" alt="OpenCode">
+        <span class="t-name">OpenCode</span>
+      </a>
+      <a href="kilo-code.html" class="hero-tool">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/kilocode.svg" alt="Kilo Code">
+        <span class="t-name">Kilo Code</span>
+      </a>
+      <a href="cursor.html" class="hero-tool">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/cursor.svg" alt="Cursor">
+        <span class="t-name">Cursor</span>
+      </a>
+      <a href="windsurf.html" class="hero-tool">
+        <img src="https://raw.githubusercontent.com/Exafunction/codeium.vim/main/windsurf.png" alt="Windsurf" class="icon-dark">
+        <span class="t-name">Windsurf</span>
+      </a>
+      <a href="cline.html" class="hero-tool">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/cline.svg" alt="Cline">
+        <span class="t-name">Cline</span>
+      </a>
+      <a href="roo-code.html" class="hero-tool">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/roocode.svg" alt="Roo Code">
+        <span class="t-name">Roo Code</span>
+      </a>
+      <a href="crush.html" class="hero-tool">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/crush.svg" alt="Crush">
+        <span class="t-name">Crush</span>
+      </a>
+      <a href="goose.html" class="hero-tool">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/goose.svg" alt="Goose">
+        <span class="t-name">Goose</span>
+      </a>
+      <a href="vscode-continue.html" class="hero-tool">
+        <img src="https://raw.githubusercontent.com/continuedev/continue/main/extensions/vscode/media/icon.png" alt="Continue" class="icon-bg">
+        <span class="t-name">Continue</span>
+      </a>
+      <a href="aider.html" class="hero-tool">
+        <img src="https://aider.chat/assets/logo.svg" alt="Aider" class="icon-dark">
+        <span class="t-name">Aider</span>
+      </a>
+      <a href="litellm.html" class="hero-tool">
+        <img src="https://docs.litellm.ai/img/favicon.ico" alt="LiteLLM" class="icon-bg">
+        <span class="t-name">LiteLLM</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section style="padding:0 0 48px">
+  <div class="container reveal">
+    <div class="stats-row">
+      <div class="stat-item"><div class="stat-label">Cost / 1M Tokens</div><div class="stat-value" style="color:var(--green2)">~$0.30</div></div>
+      <div class="stat-item"><div class="stat-label">Models</div><div class="stat-value">6</div></div>
+      <div class="stat-item"><div class="stat-label">Dev Tools</div><div class="stat-value">13+</div></div>
+      <div class="stat-item"><div class="stat-label">Architecture</div><div class="stat-value">1 FILE</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Screenshot -->
+<section class="screenshot reveal-scale">
+  <div class="container">
+    <img src="../assets/screenshots/dashboard.png" alt="0G Compute Adapter Dashboard">
+  </div>
+</section>
+
+<!-- Pricing -->
+<section id="pricing" style="background:var(--bg2)">
+  <div class="container center">
+    <div class="sec-label reveal">Pricing</div>
+    <div class="sec-title reveal">Pay 10-17x less for the same quality</div>
+    <div class="sec-desc reveal">0G Network pricing is in 0G tokens (~$0.06/token). Compare what you pay today.</div>
+
+    <div class="pricing-grid">
+      <div class="pricing-card hl reveal-left">
+        <h3>0G Network</h3>
+        <div class="sub">Via the 0G Compute Adapter</div>
+        <table class="p-table">
+          <thead><tr><th>Model</th><th>Input</th><th>Output</th></tr></thead>
+          <tbody>
+            <tr><td class="m">GLM-5</td><td class="g">1.0 0G <span class="d">(~$0.60)</span></td><td class="g">3.2 0G <span class="d">(~$1.92)</span></td></tr>
+            <tr><td class="m">DeepSeek V3</td><td class="g">0.5 0G <span class="d">(~$0.30)</span></td><td class="g">1.5 0G <span class="d">(~$0.90)</span></td></tr>
+            <tr><td class="m">GPT-OSS 120B</td><td class="g">0.8 0G <span class="d">(~$0.48)</span></td><td class="g">2.4 0G <span class="d">(~$1.44)</span></td></tr>
+            <tr><td class="m">Qwen3 VL</td><td class="g">0.5 0G <span class="d">(~$0.30)</span></td><td class="g">1.5 0G <span class="d">(~$0.90)</span></td></tr>
+            <tr><td class="m">Z-Image</td><td class="g" colspan="2">0.02 0G/image <span class="d">(~$0.012)</span></td></tr>
+            <tr><td class="m">Whisper</td><td class="g" colspan="2">0.01 0G/min <span class="d">(~$0.006)</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pricing-card reveal-right">
+        <h3>Direct Providers</h3>
+        <div class="sub">What you're paying today</div>
+        <table class="p-table">
+          <thead><tr><th>Model</th><th>Input</th><th>Output</th></tr></thead>
+          <tbody>
+            <tr><td class="m">Claude Opus</td><td class="d">$15.00</td><td class="d">$75.00</td></tr>
+            <tr><td class="m">Claude Sonnet</td><td class="d">$3.00</td><td class="d">$15.00</td></tr>
+            <tr><td class="m">GPT-4o</td><td class="d">$2.50</td><td class="d">$10.00</td></tr>
+            <tr><td class="m">GPT-4.1</td><td class="d">$2.00</td><td class="d">$8.00</td></tr>
+            <tr><td class="m" style="color:var(--dim)">DALL-E 3</td><td class="d" colspan="2">$0.04-0.12/image</td></tr>
+            <tr><td class="m" style="color:var(--dim)">Whisper API</td><td class="d" colspan="2">$0.006/min</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="savings-bar reveal-scale">
+      <div class="big">$200/mo &rarr; $12/mo</div>
+      <p>A developer spending $200/mo on Anthropic saves $2,256/year by switching to 0G.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Integrations -->
+<section id="integrations">
+  <div class="container center">
+    <div class="sec-label reveal">Integrations</div>
+    <div class="sec-title reveal">Works with every AI dev tool</div>
+    <div class="sec-desc reveal">Set your base URL and API key. That's the entire setup.</div>
+
+    <div class="int-grid">
+      <div class="int-card reveal-scale" style="position:relative">
+        <a href="open-webui.html"><img src="../assets/claraverse-logo.png" alt="Claraverse / Open WebUI" style="background:none"></a>
+        <div class="name">Claraverse</div><div class="type">Web UI</div>
+        <a href="https://claraverse.space" target="_blank" class="btn btn-accent" style="margin-top:12px;padding:6px 14px;font-size:11px">TRY IT LIVE &rarr;</a>
+      </div>
+      <a href="claude-code.html" class="int-card reveal-scale">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/claudecode-1.svg" alt="Claude Code" class="native">
+        <div class="name">Claude Code</div><div class="type">CLI</div>
+      </a>
+      <a href="opencode.html" class="int-card reveal-scale">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/opencode.svg" alt="OpenCode" class="native">
+        <div class="name">OpenCode</div><div class="type">CLI</div>
+      </a>
+      <a href="kilo-code.html" class="int-card reveal-scale">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/kilocode.svg" alt="Kilo Code" class="native">
+        <div class="name">Kilo Code</div><div class="type">VS Code</div>
+      </a>
+      <a href="cursor.html" class="int-card reveal-scale">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/cursor.svg" alt="Cursor" class="native">
+        <div class="name">Cursor</div><div class="type">IDE</div>
+      </a>
+      <a href="windsurf.html" class="int-card reveal-scale">
+        <img src="https://raw.githubusercontent.com/Exafunction/codeium.vim/main/windsurf.png" alt="Windsurf" class="dark-logo">
+        <div class="name">Windsurf</div><div class="type">IDE</div>
+      </a>
+      <a href="cline.html" class="int-card reveal-scale">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/cline.svg" alt="Cline" class="native">
+        <div class="name">Cline</div><div class="type">VS Code</div>
+      </a>
+      <a href="roo-code.html" class="int-card reveal-scale">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/roocode.svg" alt="Roo Code" class="native">
+        <div class="name">Roo Code</div><div class="type">VS Code</div>
+      </a>
+      <a href="crush.html" class="int-card reveal-scale">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/crush.svg" alt="Crush" class="native">
+        <div class="name">Crush</div><div class="type">CLI</div>
+      </a>
+      <a href="goose.html" class="int-card reveal-scale">
+        <img src="https://z.ai/images/subscribe/support-coding-tools/goose.svg" alt="Goose" class="native">
+        <div class="name">Goose</div><div class="type">Desktop</div>
+      </a>
+      <a href="vscode-continue.html" class="int-card reveal-scale">
+        <img src="https://raw.githubusercontent.com/continuedev/continue/main/extensions/vscode/media/icon.png" alt="Continue">
+        <div class="name">Continue</div><div class="type">Plugin</div>
+      </a>
+      <a href="aider.html" class="int-card reveal-scale">
+        <img src="https://aider.chat/assets/logo.svg" alt="Aider" class="dark-logo">
+        <div class="name">Aider</div><div class="type">CLI</div>
+      </a>
+      <a href="litellm.html" class="int-card reveal-scale">
+        <img src="https://docs.litellm.ai/img/favicon.ico" alt="LiteLLM">
+        <div class="name">LiteLLM</div><div class="type">Proxy</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features" style="background:var(--bg2)">
+  <div class="container">
+    <div class="center">
+      <div class="sec-label reveal">Features</div>
+      <div class="sec-title reveal">Everything your tools expect</div>
+      <div class="sec-desc reveal">Full OpenAI + Anthropic API compatibility. Tool calling, streaming, vision, structured output.</div>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-card reveal"><div class="icon">Tool Calling</div><h3>12+ Format Parsers</h3><p>Model-specific prompt injection. Handles every format GLM-5, DeepSeek, and Qwen produce.</p></div>
+      <div class="feat-card reveal"><div class="icon">Streaming</div><h3>Native SSE</h3><p>Pass-through streaming for both OpenAI and Anthropic protocols. Real-time token output.</p></div>
+      <div class="feat-card reveal"><div class="icon">Vision</div><h3>Auto-Routing</h3><p>Send images to any model. Auto-routes to Qwen3-VL. Works transparently with the OpenAI SDK.</p></div>
+      <div class="feat-card reveal"><div class="icon">JSON Schema</div><h3>Structured Output</h3><p>json_schema and json_object response formats with schema enforcement and retries.</p></div>
+      <div class="feat-card reveal"><div class="icon">Images</div><h3>Z-Image Generation</h3><p>OpenAI-compatible /v1/images/generations via Z-Image on the 0G network.</p></div>
+      <div class="feat-card reveal"><div class="icon">Audio</div><h3>Whisper Large V3</h3><p>Standard /v1/audio/transcriptions endpoint. Drop-in Whisper replacement.</p></div>
+      <div class="feat-card reveal"><div class="icon">Auth</div><h3>Multi-Key Management</h3><p>Create, revoke, rate-limit API keys per user. All from the dashboard.</p></div>
+      <div class="feat-card reveal"><div class="icon">Costs</div><h3>Usage Tracking</h3><p>Per-model, per-request cost tracking. Export as CSV. See exactly what you spend.</p></div>
+      <div class="feat-card reveal"><div class="icon">Anthropic</div><h3>/v1/messages Built-in</h3><p>Claude Code connects directly. No translation proxy needed. Full streaming + tool calling.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Code -->
+<section>
+  <div class="container">
+    <div class="center">
+      <div class="sec-label reveal">Quick Start</div>
+      <div class="sec-title reveal">One line to switch</div>
+      <div class="sec-desc reveal">Change your base_url. Everything else stays the same.</div>
+    </div>
+    <div class="code-grid">
+      <div class="code-box reveal-left">
+        <div class="code-head">Python &mdash; OpenAI SDK</div>
+        <pre><code><span class="kw">from</span> openai <span class="kw">import</span> OpenAI
+
+client = OpenAI(
+    base_url=<span class="str">"http://localhost:8000/v1"</span>,  <span class="cm"># &larr; just this</span>
+    api_key=<span class="str">"your-api-key"</span>,
+)
+
+response = client.chat.completions.create(
+    model=<span class="str">"zai-org/GLM-5-FP8"</span>,
+    messages=[{<span class="str">"role"</span>: <span class="str">"user"</span>,
+               <span class="str">"content"</span>: <span class="str">"Hello!"</span>}],
+)
+<span class="fn">print</span>(response.choices[0].message.content)</code></pre>
+      </div>
+      <div class="code-box reveal-right">
+        <div class="code-head">Claude Code &mdash; CLI</div>
+        <pre><code><span class="cm"># Two environment variables. That's it.</span>
+
+<span class="kw">export</span> ANTHROPIC_BASE_URL=<span class="str">http://localhost:8000</span>
+<span class="kw">export</span> ANTHROPIC_API_KEY=<span class="str">your-0g-api-key</span>
+
+<span class="fn">claude</span>
+
+<span class="cm"># Claude Code now uses 0G models</span>
+<span class="cm"># at a fraction of the cost.</span>
+<span class="cm">#</span>
+<span class="cm"># Sonnet/Opus  &rarr;  GLM-5</span>
+<span class="cm"># Haiku        &rarr;  DeepSeek V3</span></code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section style="background:var(--bg2)">
+  <div class="container center">
+    <div class="sec-label reveal">Architecture</div>
+    <div class="sec-title reveal">Simple by design</div>
+    <div class="sec-desc reveal">One file. Three dependencies. Everything you need.</div>
+    <div class="arch reveal-scale">
+      <div class="arch-flow">
+        <div class="arch-box app">YOUR APP<br><span style="font-size:11px;font-weight:400;opacity:.7">OpenAI / Anthropic SDK</span></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-box proxy">0G ADAPTER<br><span style="font-size:11px;font-weight:400;opacity:.7">server.js (~1,600 LOC)</span></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-box network">0G NETWORK<br><span style="font-size:11px;font-weight:400;opacity:.7">Decentralized GPUs</span></div>
+      </div>
+      <div class="arch-tags">
+        <span>Tool Calling</span><span>Streaming</span><span>Vision</span><span>JSON Schema</span><span>Rate Limiting</span><span>Cost Tracking</span><span>Auth</span><span>Dashboard</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Dashboard -->
+<section id="dashboard">
+  <div class="container center">
+    <div class="sec-label reveal">Dashboard</div>
+    <div class="sec-title reveal">Full admin dashboard included</div>
+    <div class="sec-desc reveal">Monitor usage, test models, manage keys, and track costs.</div>
+    <div class="gallery">
+      <div class="gallery-item reveal-scale">
+        <img src="../assets/screenshots/dashboard.png" alt="Dashboard">
+        <div class="label">Overview &mdash; Real-time stats</div>
+      </div>
+      <div class="gallery-item reveal-scale">
+        <img src="../assets/screenshots/modelslist.jpg" alt="Models">
+        <div class="label">Models &mdash; Auto-discovered</div>
+      </div>
+      <div class="gallery-item reveal-scale">
+        <img src="../assets/screenshots/playground.png" alt="Playground">
+        <div class="label">Playground &mdash; Test anything</div>
+      </div>
+      <div class="gallery-item reveal-scale">
+        <img src="../assets/screenshots/Logs.png" alt="Logs">
+        <div class="label">Logs &mdash; Persistent viewer</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" style="background:var(--bg2)">
+  <div class="container">
+    <h2 class="reveal">Start saving on AI today</h2>
+    <p class="reveal">Open source. Self-hosted. 5 minutes to set up.</p>
+    <div class="hero-buttons reveal">
+      <a href="https://github.com/claraverse/og-proxy" class="btn btn-accent">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        VIEW ON GITHUB
+      </a>
+      <a href="https://github.com/claraverse/og-proxy#quick-start" class="btn btn-outline">QUICK START</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <div class="links">
+      <a href="https://github.com/claraverse/og-proxy">GITHUB</a>
+      <a href="https://github.com/claraverse/og-proxy#api-reference">API DOCS</a>
+      <a href="https://0g.ai">0G NETWORK</a>
+      <a href="https://claraverse.ai">CLARAVERSE</a>
+    </div>
+    <div class="copy">Built by <a href="https://claraverse.ai">Claraverse</a> &bull; Powered by <a href="https://0g.ai">0G Network</a> &bull; MIT License</div>
+  </div>
+</footer>
+
+<!-- Scroll reveal + stagger -->
+<script>
+(function(){
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach((e,i)=>{
+      if(e.isIntersecting){
+        // stagger children of grids
+        const parent = e.target.parentElement;
+        if(parent && (parent.classList.contains('int-grid')||parent.classList.contains('feat-grid')||parent.classList.contains('gallery'))){
+          const siblings = [...parent.children];
+          const idx = siblings.indexOf(e.target);
+          e.target.style.transitionDelay = (idx * 0.06) + 's';
+        }
+        e.target.classList.add('visible');
+        obs.unobserve(e.target);
+      }
+    });
+  },{threshold:0.08,rootMargin:'0px 0px -40px 0px'});
+
+  document.querySelectorAll('.reveal,.reveal-left,.reveal-right,.reveal-scale').forEach(el=>obs.observe(el));
+})();
+</script>
+
+</body>
+</html>

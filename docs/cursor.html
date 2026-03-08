@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Using 0G Compute Adapter with Cursor</title>
+<meta name="description" content="Step-by-step guide to configure Cursor IDE with the 0G Compute Adapter for affordable AI coding.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 248 120'%3E%3Cpath d='M247.994 63.4189C246.43 94.8449 220.164 119.85 187.993 119.85C154.815 119.85 127.918 93.2547 127.918 60.4481C127.918 27.6413 154.815 1.04688 187.993 1.04688C219.144 1.04688 244.758 24.491 247.772 54.5085H220.49C217.665 39.3007 204.19 27.7779 187.994 27.7779C169.745 27.7779 154.952 42.4049 154.952 60.4481C154.952 78.4922 169.745 93.1192 187.994 93.1192C202.003 93.1192 213.974 84.498 218.782 72.3291H172.974V63.4189H247.994Z' fill='%237c3aed'/%3E%3Cpath d='M19.7719 104.311C43.3526 125.438 79.8058 124.755 102.555 102.262C126.015 79.064 126.015 41.4537 102.555 18.2555C79.0936-4.94194 41.0564-4.94194 17.5956 18.2555C-4.43161 40.0359-5.77756 74.5211 13.5575 97.8546L32.8486 78.78C23.9713 66.0513 25.2587 48.4817 36.7116 37.1576C49.6149 24.3986 70.5357 24.3986 83.4394 37.1576C96.3419 49.9163 96.3419 70.6022 83.4394 83.3611C73.5328 93.1562 58.9014 95.4318 46.7999 90.1865L79.1909 58.1583L72.8191 51.8587L19.7719 104.311Z' fill='%237c3aed'/%3E%3C/svg%3E">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+:root{
+  --bg:#050507;--bg2:#0a0a0e;--card:#0e0e13;
+  --border:#19191f;--border2:#242430;
+  --text:#dcdce4;--text2:#8e8ea0;--dim:#55556a;
+  --accent:#7c3aed;--accent2:#a78bfa;--accent-bg:rgba(124,58,237,0.06);
+  --green:#10b981;--green-bg:rgba(16,185,129,0.08);--green2:#34d399;
+  --red:#f43f5e;--blue:#3b82f6;--blue-bg:rgba(59,130,246,0.06);
+  --orange:#f59e0b;--orange-bg:rgba(245,158,11,0.06);
+  --mono:'JetBrains Mono','SF Mono','Fira Code',monospace;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --r:3px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--accent);color:white}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+a{color:var(--accent2);text-decoration:none;transition:color .15s}
+a:hover{color:#c4b5fd}
+.container{max-width:860px;margin:0 auto;padding:0 28px}
+
+/* ── Nav ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border)}
+nav .inner{max-width:1100px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px;color:var(--text)}
+.logo svg{height:20px;width:auto}
+.logo span{font-family:var(--mono);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1.5px}
+nav .links{display:flex;gap:24px;align-items:center}
+nav .links a{color:var(--dim);font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.5px}
+nav .links a:hover{color:var(--text)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);font-family:var(--mono);font-size:13px;font-weight:600;transition:all .15s;border:none;cursor:pointer;letter-spacing:.3px}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent2)}
+.back-arrow{display:inline-flex;align-items:center;gap:6px;color:var(--dim);font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.5px}
+.back-arrow:hover{color:var(--text)}
+.back-arrow svg{width:14px;height:14px}
+
+/* ── Page Header ── */
+.page-header{padding:100px 0 40px;border-bottom:1px solid var(--border)}
+.page-header .tool-info{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.page-header .tool-info img{width:48px;height:48px;border-radius:var(--r);background:rgba(255,255,255,.9);padding:4px}
+.page-header .tool-info .meta{display:flex;flex-direction:column}
+.page-header .tool-info .tool-type{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim)}
+.page-header h1{font-family:var(--sans);font-size:clamp(1.4rem,3vw,2rem);font-weight:800;letter-spacing:-.01em;line-height:1.3}
+.page-header h1 .accent{color:var(--accent2)}
+
+/* ── Sections ── */
+section{padding:48px 0}
+.sec-label{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:8px}
+.sec-title{font-size:clamp(1.1rem,2vw,1.4rem);font-weight:800;margin-bottom:20px;letter-spacing:-.01em}
+
+/* ── Card ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px}
+.card-head{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+
+/* ── Steps ── */
+.step{background:var(--card);border:1px solid var(--border);border-left:2px solid var(--accent);border-radius:var(--r);padding:20px 24px;margin-bottom:16px}
+.step-num{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent2);margin-bottom:6px}
+.step h3{font-size:15px;font-weight:700;margin-bottom:10px}
+.step p{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:8px}
+.step p:last-child{margin-bottom:0}
+.step strong{color:var(--text);font-weight:600}
+.step kbd{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--border2);padding:2px 7px;border-radius:var(--r);color:var(--text)}
+
+/* ── Inline code ── */
+code.inline{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--border2);padding:2px 7px;border-radius:var(--r);color:var(--accent2)}
+
+/* ── Code blocks ── */
+.code-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:12px 0}
+.code-head{padding:10px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim)}
+.code-box pre{padding:16px;font-family:var(--mono);font-size:13px;line-height:1.7;overflow-x:auto;color:var(--text2)}
+
+/* ── Tables ── */
+.doc-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;margin:12px 0}
+.doc-table th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.doc-table td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text2)}
+.doc-table td:first-child{color:var(--text);font-weight:600}
+.doc-table td code{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--border2);padding:2px 7px;border-radius:var(--r);color:var(--accent2)}
+.doc-table tr:hover{background:var(--accent-bg)}
+
+/* ── Callout ── */
+.callout{background:var(--card);border:1px solid var(--border);border-left:2px solid var(--green);border-radius:var(--r);padding:16px 20px;margin:12px 0;font-size:13px;color:var(--text2);line-height:1.7}
+.callout.warn{border-left-color:var(--orange)}
+.callout p{margin-bottom:4px}
+.callout p:last-child{margin-bottom:0}
+
+/* ── Notes list ── */
+.notes-list{list-style:none;padding:0;margin:0}
+.notes-list li{background:var(--card);border:1px solid var(--border);border-left:2px solid var(--border2);border-radius:var(--r);padding:14px 20px;margin-bottom:8px;font-size:13px;color:var(--text2);line-height:1.7}
+
+/* ── Footer ── */
+footer{border-top:1px solid var(--border);padding:28px 0;text-align:center}
+footer .links{display:flex;gap:20px;justify-content:center;margin-bottom:10px;flex-wrap:wrap}
+footer .links a{color:var(--dim);font-family:var(--mono);font-size:12px;letter-spacing:.5px}
+footer .links a:hover{color:var(--text)}
+footer .copy{color:var(--dim);font-family:var(--mono);font-size:11px;letter-spacing:.3px}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  nav .links{display:none}
+  .page-header h1{font-size:1.4rem}
+  .doc-table{font-size:12px}
+  .doc-table th,.doc-table td{padding:8px 8px}
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="inner">
+    <a href="index.html" class="logo">
+      <svg viewBox="0 0 248 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M247.994 63.4189C246.43 94.8449 220.164 119.85 187.993 119.85C154.815 119.85 127.918 93.2547 127.918 60.4481C127.918 27.6413 154.815 1.04688 187.993 1.04688C219.144 1.04688 244.758 24.491 247.772 54.5085H220.49C217.665 39.3007 204.19 27.7779 187.994 27.7779C169.745 27.7779 154.952 42.4049 154.952 60.4481C154.952 78.4922 169.745 93.1192 187.994 93.1192C202.003 93.1192 213.974 84.498 218.782 72.3291H172.974V63.4189H247.994Z" fill="#7c3aed"/>
+        <path d="M19.7719 104.311C43.3526 125.438 79.8058 124.755 102.555 102.262C126.015 79.064 126.015 41.4537 102.555 18.2555C79.0936-4.94194 41.0564-4.94194 17.5956 18.2555C-4.43161 40.0359-5.77756 74.5211 13.5575 97.8546L32.8486 78.78C23.9713 66.0513 25.2587 48.4817 36.7116 37.1576C49.6149 24.3986 70.5357 24.3986 83.4394 37.1576C96.3419 49.9163 96.3419 70.6022 83.4394 83.3611C73.5328 93.1562 58.9014 95.4318 46.7999 90.1865L79.1909 58.1583L72.8191 51.8587L19.7719 104.311Z" fill="#7c3aed"/>
+      </svg>
+      <span>Compute Adapter</span>
+    </a>
+    <div class="links">
+      <a href="index.html" class="back-arrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to Home
+      </a>
+      <a href="https://github.com/claraverse/og-proxy" class="btn btn-outline">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Page Header -->
+<header class="page-header">
+  <div class="container">
+    <div class="tool-info">
+      <img src="https://cursor.com/apple-touch-icon.png" alt="Cursor">
+      <div class="meta">
+        <span class="tool-type">IDE</span>
+      </div>
+    </div>
+    <h1>Using 0G Compute Adapter with <span class="accent">Cursor</span></h1>
+  </div>
+</header>
+
+<!-- Setup -->
+<section>
+  <div class="container">
+    <div class="sec-label">Setup</div>
+    <div class="sec-title">Configure Cursor for 0G</div>
+
+    <!-- Step 1 -->
+    <div class="step">
+      <div class="step-num">Step 1</div>
+      <h3>Open Settings</h3>
+      <p><code class="inline">Cursor Settings</code> &rarr; <code class="inline">Models</code></p>
+      <p>Or press <kbd>Cmd + ,</kbd> (macOS) / <kbd>Ctrl + ,</kbd> (Windows/Linux) and navigate to <strong>Models</strong>.</p>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+      <div class="step-num">Step 2</div>
+      <h3>Configure OpenAI API</h3>
+      <table class="doc-table">
+        <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>OpenAI API Key</td><td><code>sk-0g-your-api-key</code></td></tr>
+          <tr><td>Override OpenAI Base URL</td><td><code>http://localhost:8000/v1</code></td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <p>Toggle on "Override OpenAI Base URL" &mdash; it's off by default.</p>
+        <p>If your adapter is on a remote server, use that server's address instead of <code class="inline">localhost</code>.</p>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+      <div class="step-num">Step 3</div>
+      <h3>Add Model Names</h3>
+      <p>Click <strong>"+ Add Model"</strong> and add the 0G models you want to use:</p>
+      <div class="code-box">
+        <div class="code-head">Model Names</div>
+        <pre>zai-org/GLM-5-FP8
+deepseek/deepseek-chat-v3-0324
+openai/gpt-oss-120b
+qwen/qwen3-vl-30b-a3b-instruct</pre>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+      <div class="step-num">Step 4</div>
+      <h3>Use</h3>
+      <p>Open any Cursor chat (<kbd>Cmd+L</kbd>) or inline edit (<kbd>Cmd+K</kbd>), then select a 0G model from the model dropdown.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Recommended Models -->
+<section style="background:var(--bg2)">
+  <div class="container">
+    <div class="sec-label">Recommended Models</div>
+    <div class="sec-title">Best models for each use case</div>
+    <div class="card">
+      <table class="doc-table">
+        <thead><tr><th>Use Case</th><th>Model</th></tr></thead>
+        <tbody>
+          <tr><td>Chat / Q&amp;A</td><td><code>zai-org/GLM-5-FP8</code></td></tr>
+          <tr><td>Code generation</td><td><code>deepseek/deepseek-chat-v3-0324</code></td></tr>
+          <tr><td>Tab completion</td><td><code>deepseek/deepseek-chat-v3-0324</code></td></tr>
+          <tr><td>General purpose</td><td><code>openai/gpt-oss-120b</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Important Notes -->
+<section>
+  <div class="container">
+    <div class="sec-label">Important Notes</div>
+    <div class="sec-title">Things to keep in mind</div>
+    <ul class="notes-list">
+      <li>Cursor routes requests for your custom models only through the override base URL. Built-in Cursor models (like gpt-4o) continue to use Cursor's own backend.</li>
+      <li>Streaming is fully supported &mdash; responses appear in real-time.</li>
+      <li>If the API key field is empty, Cursor won't send requests. Any non-empty value works.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Troubleshooting -->
+<section style="background:var(--bg2)">
+  <div class="container">
+    <div class="sec-label">Troubleshooting</div>
+    <div class="sec-title">Common issues and fixes</div>
+    <div class="card">
+      <table class="doc-table">
+        <thead><tr><th>Issue</th><th>Solution</th></tr></thead>
+        <tbody>
+          <tr><td>"Connection refused"</td><td>Make sure the adapter is running on the configured port</td></tr>
+          <tr><td>"401 Unauthorized"</td><td>Verify API key matches the one from adapter startup logs</td></tr>
+          <tr><td>Model not in dropdown</td><td>Make sure you added the model name in Step 3</td></tr>
+          <tr><td>Built-in models broken</td><td>Known Cursor bug &mdash; custom base URL can affect built-in models. Use separate model names.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <div class="links">
+      <a href="index.html">HOME</a>
+      <a href="https://github.com/claraverse/og-proxy">GITHUB</a>
+      <a href="https://github.com/claraverse/og-proxy#api-reference">API DOCS</a>
+      <a href="https://0g.ai">0G NETWORK</a>
+      <a href="https://claraverse.ai">CLARAVERSE</a>
+    </div>
+    <div class="copy">Built by <a href="https://claraverse.ai">Claraverse</a> &bull; Powered by <a href="https://0g.ai">0G Network</a> &bull; MIT License</div>
+  </div>
+</footer>
+
+</body>
+</html>

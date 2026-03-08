@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crush — 0G Compute Adapter</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 248 120'%3E%3Cpath d='M247.994 63.4189C246.43 94.8449 220.164 119.85 187.993 119.85C154.815 119.85 127.918 93.2547 127.918 60.4481C127.918 27.6413 154.815 1.04688 187.993 1.04688C219.144 1.04688 244.758 24.491 247.772 54.5085H220.49C217.665 39.3007 204.19 27.7779 187.994 27.7779C169.745 27.7779 154.952 42.4049 154.952 60.4481C154.952 78.4922 169.745 93.1192 187.994 93.1192C202.003 93.1192 213.974 84.498 218.782 72.3291H172.974V63.4189H247.994Z' fill='%237c3aed'/%3E%3Cpath d='M19.7719 104.311C43.3526 125.438 79.8058 124.755 102.555 102.262C126.015 79.064 126.015 41.4537 102.555 18.2555C79.0936-4.94194 41.0564-4.94194 17.5956 18.2555C-4.43161 40.0359-5.77756 74.5211 13.5575 97.8546L32.8486 78.78C23.9713 66.0513 25.2587 48.4817 36.7116 37.1576C49.6149 24.3986 70.5357 24.3986 83.4394 37.1576C96.3419 49.9163 96.3419 70.6022 83.4394 83.3611C73.5328 93.1562 58.9014 95.4318 46.7999 90.1865L79.1909 58.1583L72.8191 51.8587L19.7719 104.311Z' fill='%237c3aed'/%3E%3C/svg%3E">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+:root{--bg:#050507;--bg2:#0a0a0e;--card:#0e0e13;--border:#19191f;--border2:#242430;--text:#dcdce4;--text2:#8e8ea0;--dim:#55556a;--accent:#7c3aed;--accent2:#a78bfa;--green:#10b981;--green2:#34d399;--mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;--r:3px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:white}
+a{color:var(--accent2);text-decoration:none}a:hover{color:#c4b5fd}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border)}
+nav .inner{max-width:900px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:16px}
+.back{color:var(--dim);font-family:var(--mono);font-size:13px;display:flex;align-items:center;gap:6px}.back:hover{color:var(--text)}
+.logo{display:flex;align-items:center;gap:10px;color:var(--text);margin-left:auto}
+.logo svg{height:18px;width:auto}
+.logo span{font-family:var(--mono);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1.5px}
+.content{max-width:800px;margin:0 auto;padding:80px 28px 60px}
+.tool-header{display:flex;align-items:center;gap:16px;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.tool-header img{width:48px;height:48px;border-radius:var(--r);background:rgba(255,255,255,.9);padding:4px}
+.tool-header h1{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.tool-header .type{font-family:var(--mono);font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
+h2{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin:36px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+h3{font-size:15px;font-weight:700;margin:20px 0 10px}
+p{color:var(--text2);margin-bottom:12px;line-height:1.7}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px}
+.card.note{border-left:2px solid var(--green)}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;margin-bottom:16px}
+th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);padding:8px 12px;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text2)}
+td:first-child{font-weight:600;color:var(--text)}
+pre{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;font-family:var(--mono);font-size:13px;line-height:1.7;overflow-x:auto;color:var(--text2);margin-bottom:16px}
+code{font-family:var(--mono);font-size:13px;background:var(--card);padding:2px 6px;border-radius:2px;color:var(--accent2)}
+pre code{background:none;padding:0;color:inherit}
+.kw{color:#ff7b72}.str{color:#a5d6ff}.cm{color:var(--dim)}.fn{color:#d2a8ff}
+ul,ol{margin-bottom:12px;padding-left:20px;color:var(--text2)}
+li{margin-bottom:6px;line-height:1.6}
+.back-bottom{text-align:center;padding:40px 0;border-top:1px solid var(--border);margin-top:40px}
+.back-bottom a{font-family:var(--mono);font-size:13px;color:var(--dim)}.back-bottom a:hover{color:var(--accent2)}
+</style>
+</head>
+<body>
+<nav><div class="inner">
+<a href="index.html" class="back">&larr; Back</a>
+<div class="logo">
+<svg viewBox="0 0 248 120" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M247.994 63.4189C246.43 94.8449 220.164 119.85 187.993 119.85C154.815 119.85 127.918 93.2547 127.918 60.4481C127.918 27.6413 154.815 1.04688 187.993 1.04688C219.144 1.04688 244.758 24.491 247.772 54.5085H220.49C217.665 39.3007 204.19 27.7779 187.994 27.7779C169.745 27.7779 154.952 42.4049 154.952 60.4481C154.952 78.4922 169.745 93.1192 187.994 93.1192C202.003 93.1192 213.974 84.498 218.782 72.3291H172.974V63.4189H247.994Z" fill="#7c3aed"/><path d="M19.7719 104.311C43.3526 125.438 79.8058 124.755 102.555 102.262C126.015 79.064 126.015 41.4537 102.555 18.2555C79.0936-4.94194 41.0564-4.94194 17.5956 18.2555C-4.43161 40.0359-5.77756 74.5211 13.5575 97.8546L32.8486 78.78C23.9713 66.0513 25.2587 48.4817 36.7116 37.1576C49.6149 24.3986 70.5357 24.3986 83.4394 37.1576C96.3419 49.9163 96.3419 70.6022 83.4394 83.3611C73.5328 93.1562 58.9014 95.4318 46.7999 90.1865L79.1909 58.1583L72.8191 51.8587L19.7719 104.311Z" fill="#7c3aed"/></svg>
+<span>Compute Adapter</span>
+</div>
+</div></nav>
+<div class="content">
+
+<div class="tool-header">
+<img src="https://z.ai/images/subscribe/support-coding-tools/crush.svg" alt="Crush" style="background:none;padding:0;height:40px;width:auto;border-radius:0">
+<div>
+<h1>Crush</h1>
+<div class="type">CLI</div>
+</div>
+</div>
+
+<h2>Overview</h2>
+
+<p>Crush is a terminal-based AI coding tool by Charm. Connect it to the 0G Compute Adapter for cost-effective AI-assisted coding.</p>
+
+<h2>Installation</h2>
+
+<pre><code><span class="cm"># macOS</span>
+brew install charmbracelet/tap/crush
+
+<span class="cm"># npm (cross-platform)</span>
+npm install -g @charmland/crush
+
+<span class="cm"># Arch Linux</span>
+yay -S crush-bin</code></pre>
+
+<h2>Setup</h2>
+
+<p>Edit your Crush config file:</p>
+<ul>
+<li>macOS/Linux: <code>~/.config/crush/crush.json</code></li>
+<li>Windows: <code>%USERPROFILE%\.config\crush\crush.json</code></li>
+</ul>
+
+<pre><code>{
+  <span class="kw">"providers"</span>: {
+    <span class="kw">"0g"</span>: {
+      <span class="kw">"base_url"</span>: <span class="str">"http://localhost:8000/v1"</span>,
+      <span class="kw">"api_key"</span>: <span class="str">"your-0g-api-key"</span>
+    }
+  }
+}</code></pre>
+
+<p>Launch Crush, then press <code>Ctrl+P</code> and select "Switch Model" to pick a 0G model.</p>
+
+<h2>Recommended Models</h2>
+
+<table>
+<tr><th>Use Case</th><th>Model</th></tr>
+<tr><td>Code generation</td><td>zai-org/GLM-5-FP8</td></tr>
+<tr><td>Fast tasks</td><td>deepseek/deepseek-chat-v3-0324</td></tr>
+<tr><td>General purpose</td><td>openai/gpt-oss-120b</td></tr>
+</table>
+
+<h2>Capabilities</h2>
+
+<p>Once configured, Crush enables code generation, debugging, file operations, and technical Q&A through AI-enhanced terminal workflows — all at 0G network prices.</p>
+
+<h2>Troubleshooting</h2>
+
+<table>
+<tr><th>Issue</th><th>Solution</th></tr>
+<tr><td>"Connection refused"</td><td>Verify adapter is running on configured port</td></tr>
+<tr><td>Model not available</td><td>Press Ctrl+P to switch models manually</td></tr>
+<tr><td>Provider not showing</td><td>Restart Crush after editing config</td></tr>
+</table>
+
+<div class="back-bottom"><a href="index.html">&larr; Back to all integrations</a></div>
+</div>
+</body>
+</html>

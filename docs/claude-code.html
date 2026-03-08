@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code — 0G Compute Adapter</title>
+<meta name="description" content="Use Claude Code with the 0G Compute Adapter. Native Anthropic Messages API support, no translation proxy needed.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 248 120'%3E%3Cpath d='M247.994 63.4189C246.43 94.8449 220.164 119.85 187.993 119.85C154.815 119.85 127.918 93.2547 127.918 60.4481C127.918 27.6413 154.815 1.04688 187.993 1.04688C219.144 1.04688 244.758 24.491 247.772 54.5085H220.49C217.665 39.3007 204.19 27.7779 187.994 27.7779C169.745 27.7779 154.952 42.4049 154.952 60.4481C154.952 78.4922 169.745 93.1192 187.994 93.1192C202.003 93.1192 213.974 84.498 218.782 72.3291H172.974V63.4189H247.994Z' fill='%237c3aed'/%3E%3Cpath d='M19.7719 104.311C43.3526 125.438 79.8058 124.755 102.555 102.262C126.015 79.064 126.015 41.4537 102.555 18.2555C79.0936-4.94194 41.0564-4.94194 17.5956 18.2555C-4.43161 40.0359-5.77756 74.5211 13.5575 97.8546L32.8486 78.78C23.9713 66.0513 25.2587 48.4817 36.7116 37.1576C49.6149 24.3986 70.5357 24.3986 83.4394 37.1576C96.3419 49.9163 96.3419 70.6022 83.4394 83.3611C73.5328 93.1562 58.9014 95.4318 46.7999 90.1865L79.1909 58.1583L72.8191 51.8587L19.7719 104.311Z' fill='%237c3aed'/%3E%3C/svg%3E">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+:root{
+  --bg:#050507;--bg2:#0a0a0e;--card:#0e0e13;
+  --border:#19191f;--border2:#242430;
+  --text:#dcdce4;--text2:#8e8ea0;--dim:#55556a;
+  --accent:#7c3aed;--accent2:#a78bfa;--accent-bg:rgba(124,58,237,0.06);
+  --green:#10b981;--green-bg:rgba(16,185,129,0.08);--green2:#34d399;
+  --red:#f43f5e;--blue:#3b82f6;--blue-bg:rgba(59,130,246,0.06);
+  --orange:#f59e0b;--orange-bg:rgba(245,158,11,0.06);
+  --mono:'JetBrains Mono','SF Mono','Fira Code',monospace;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --r:3px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--accent);color:white}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+a{color:var(--accent2);text-decoration:none;transition:color .15s}
+a:hover{color:#c4b5fd}
+.container{max-width:860px;margin:0 auto;padding:0 28px}
+
+/* -- Nav -- */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border)}
+nav .inner{max-width:860px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:16px}
+.back-link{color:var(--dim);font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.5px;display:flex;align-items:center;gap:6px;transition:color .15s}
+.back-link:hover{color:var(--text)}
+.nav-sep{color:var(--border2);font-size:16px;user-select:none}
+.page-id{display:flex;align-items:center;gap:10px}
+.page-id img{width:20px;height:20px;border-radius:var(--r)}
+.page-id span{font-family:var(--mono);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text)}
+.page-id .type{font-weight:500;color:var(--dim);font-size:11px;letter-spacing:1px;margin-left:2px}
+
+/* -- Header -- */
+.page-header{padding:100px 0 48px}
+.page-header h1{font-family:var(--sans);font-size:clamp(1.6rem,4vw,2.4rem);font-weight:800;line-height:1.2;margin-bottom:10px;letter-spacing:-.02em}
+.page-header .sub{font-size:14px;color:var(--text2);max-width:600px;line-height:1.7}
+
+/* -- Section -- */
+.doc-section{margin-bottom:48px}
+.sec-label{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:8px}
+.sec-title{font-size:clamp(1.1rem,2.5vw,1.5rem);font-weight:800;margin-bottom:8px;letter-spacing:-.01em}
+.sec-desc{font-size:14px;color:var(--text2);max-width:600px;margin-bottom:20px;line-height:1.7}
+
+/* -- Card -- */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px}
+.card-accent{border-left:2px solid var(--accent)}
+.card-green{border-left:2px solid var(--green)}
+.card-head{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+
+/* -- Code -- */
+.code-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.code-head{padding:10px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim)}
+.code-box pre{padding:16px;font-family:var(--mono);font-size:13px;line-height:1.7;overflow-x:auto;color:var(--text2)}
+.code-box .kw{color:#ff7b72}
+.code-box .str{color:#a5d6ff}
+.code-box .cm{color:var(--dim)}
+.code-box .fn{color:#d2a8ff}
+.code-box .key{color:#7ee787}
+
+/* -- Table -- */
+.doc-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;margin-bottom:16px}
+.doc-table th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);padding:8px 12px;border-bottom:1px solid var(--border);background:var(--card)}
+.doc-table td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text2);background:var(--card)}
+.doc-table td:first-child{color:var(--text);font-weight:600}
+.doc-table code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:2px 6px;border:1px solid var(--border);border-radius:var(--r);color:var(--accent2)}
+.doc-table .status{color:var(--green2);font-weight:600}
+.doc-table .model-0g{color:var(--green2)}
+
+/* -- Option label -- */
+.option-label{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+
+/* -- Tip -- */
+.tip{background:var(--card);border:1px solid var(--border);border-left:2px solid var(--green);border-radius:var(--r);padding:14px 18px;margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.6}
+.tip strong{color:var(--green2);font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:1px}
+
+/* -- Footer -- */
+footer{border-top:1px solid var(--border);padding:28px 0;text-align:center;margin-top:48px}
+footer .links{display:flex;gap:20px;justify-content:center;margin-bottom:10px;flex-wrap:wrap}
+footer .links a{color:var(--dim);font-family:var(--mono);font-size:12px;letter-spacing:.5px}
+footer .links a:hover{color:var(--text)}
+footer .copy{color:var(--dim);font-family:var(--mono);font-size:11px;letter-spacing:.3px}
+
+/* -- Responsive -- */
+@media(max-width:768px){
+  .container{padding:0 16px}
+  nav .inner{padding:12px 16px}
+  .page-header h1{font-size:1.5rem}
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="inner">
+    <a href="index.html" class="back-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      BACK
+    </a>
+    <span class="nav-sep">/</span>
+    <div class="page-id">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Claude_AI_logo.svg" alt="Claude Code">
+      <span>Claude Code</span>
+      <span class="type">CLI</span>
+    </div>
+  </div>
+</nav>
+
+<!-- Header -->
+<section class="page-header">
+  <div class="container">
+    <h1>Using 0G Compute Adapter with Claude Code</h1>
+    <p class="sub">The 0G Compute Adapter has a built-in Anthropic Messages API (<code style="font-family:var(--mono);font-size:13px;background:var(--card);padding:2px 6px;border:1px solid var(--border);border-radius:var(--r);color:var(--accent2)">/v1/messages</code>) that speaks Claude Code's native protocol. No translation proxy required.</p>
+  </div>
+</section>
+
+<!-- Setup -->
+<section>
+  <div class="container">
+
+    <div class="doc-section">
+      <div class="sec-label">Setup</div>
+      <div class="sec-title">Connect Claude Code to 0G</div>
+      <div class="sec-desc">Four ways to point Claude Code at your adapter. Pick whichever fits your workflow.</div>
+
+      <!-- Option 1 -->
+      <div class="card card-accent">
+        <div class="option-label">Option 1 &mdash; Environment Variables (quickest)</div>
+        <div class="code-box" style="margin-bottom:0;border:none;border-radius:0">
+          <div class="code-head">Terminal</div>
+          <pre><code><span class="kw">export</span> ANTHROPIC_BASE_URL=<span class="str">http://localhost:8000</span>
+<span class="kw">export</span> ANTHROPIC_API_KEY=<span class="str">your-0g-api-key</span>
+<span class="fn">claude</span></code></pre>
+        </div>
+      </div>
+
+      <!-- Option 2 -->
+      <div class="card card-accent">
+        <div class="option-label">Option 2 &mdash; Settings File</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Add to <code style="font-family:var(--mono);font-size:12px;background:var(--bg);padding:2px 6px;border:1px solid var(--border);border-radius:var(--r);color:var(--accent2)">~/.claude/settings.json</code>:</p>
+        <div class="code-box" style="margin-bottom:0;border:none;border-radius:0">
+          <div class="code-head">~/.claude/settings.json</div>
+          <pre><code>{
+  <span class="key">"env"</span>: {
+    <span class="key">"ANTHROPIC_BASE_URL"</span>: <span class="str">"http://localhost:8000"</span>,
+    <span class="key">"ANTHROPIC_API_KEY"</span>: <span class="str">"your-0g-api-key"</span>
+  }
+}</code></pre>
+        </div>
+      </div>
+
+      <!-- Option 3 -->
+      <div class="card card-accent">
+        <div class="option-label">Option 3 &mdash; Per-Project</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Add to your project's <code style="font-family:var(--mono);font-size:12px;background:var(--bg);padding:2px 6px;border:1px solid var(--border);border-radius:var(--r);color:var(--accent2)">.claude/settings.json</code>:</p>
+        <div class="code-box" style="margin-bottom:0;border:none;border-radius:0">
+          <div class="code-head">.claude/settings.json</div>
+          <pre><code>{
+  <span class="key">"env"</span>: {
+    <span class="key">"ANTHROPIC_BASE_URL"</span>: <span class="str">"http://localhost:8000"</span>,
+    <span class="key">"ANTHROPIC_API_KEY"</span>: <span class="str">"your-0g-api-key"</span>
+  }
+}</code></pre>
+        </div>
+      </div>
+
+      <!-- Option 4 -->
+      <div class="card card-accent">
+        <div class="option-label">Option 4 &mdash; Inline</div>
+        <div class="code-box" style="margin-bottom:0;border:none;border-radius:0">
+          <div class="code-head">Terminal</div>
+          <pre><code>ANTHROPIC_BASE_URL=<span class="str">http://localhost:8000</span> ANTHROPIC_API_KEY=<span class="str">your-0g-api-key</span> <span class="fn">claude</span></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="doc-section">
+      <div class="sec-label">Model Mapping</div>
+      <div class="sec-title">How It Works</div>
+      <div class="sec-desc">The adapter automatically maps Claude model names to 0G models.</div>
+
+      <table class="doc-table">
+        <thead>
+          <tr><th>Claude Code Sends</th><th>0G Model Used</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>sonnet</code>, <code>claude-sonnet-4-6</code></td><td class="model-0g">zai-org/GLM-5-FP8</td></tr>
+          <tr><td><code>opus</code>, <code>claude-opus-4-6</code></td><td class="model-0g">zai-org/GLM-5-FP8</td></tr>
+          <tr><td><code>haiku</code>, <code>claude-haiku-4-5-*</code></td><td class="model-0g">deepseek/deepseek-chat-v3-0324</td></tr>
+        </tbody>
+      </table>
+
+      <div class="tip">
+        <strong>Tip</strong><br>
+        You can also use 0G model names directly: <code style="font-family:var(--mono);font-size:12px;background:var(--bg);padding:2px 6px;border:1px solid var(--border);border-radius:var(--r);color:var(--accent2)">claude --model zai-org/GLM-5-FP8</code>
+      </div>
+    </div>
+
+    <!-- What Works -->
+    <div class="doc-section">
+      <div class="sec-label">Compatibility</div>
+      <div class="sec-title">What Works</div>
+
+      <table class="doc-table">
+        <thead>
+          <tr><th>Feature</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Chat with streaming</td><td class="status">Supported</td></tr>
+          <tr><td>Tool calling (agentic)</td><td class="status">Supported</td></tr>
+          <tr><td>Multi-turn conversations</td><td class="status">Supported</td></tr>
+          <tr><td><code>x-api-key</code> auth</td><td class="status">Supported</td></tr>
+          <tr><td>System prompts</td><td class="status">Supported</td></tr>
+          <tr><td>Vision (images)</td><td class="status">Supported <span style="color:var(--text2);font-weight:400">(auto-routes to Qwen3-VL)</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Remote Server -->
+    <div class="doc-section">
+      <div class="sec-label">Deployment</div>
+      <div class="sec-title">Remote Server</div>
+      <div class="sec-desc">Point Claude Code at a remote adapter instance instead of localhost.</div>
+
+      <div class="code-box">
+        <div class="code-head">Terminal</div>
+        <pre><code><span class="kw">export</span> ANTHROPIC_BASE_URL=<span class="str">https://your-server.com</span>
+<span class="kw">export</span> ANTHROPIC_API_KEY=<span class="str">your-0g-api-key</span>
+<span class="fn">claude</span></code></pre>
+      </div>
+    </div>
+
+    <!-- Troubleshooting -->
+    <div class="doc-section">
+      <div class="sec-label">Troubleshooting</div>
+      <div class="sec-title">Common Issues</div>
+
+      <table class="doc-table">
+        <thead>
+          <tr><th>Issue</th><th>Solution</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>"Connection refused"</td><td>Make sure the adapter is running and <code>ANTHROPIC_BASE_URL</code> is correct</td></tr>
+          <tr><td>"Invalid API key"</td><td>Use the API key from the adapter's startup logs</td></tr>
+          <tr><td>Slow first response</td><td>Normal &mdash; first request establishes 0G provider connection</td></tr>
+          <tr><td>Tools not working</td><td>GLM-5 has the best tool calling support through the adapter</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <div class="links">
+      <a href="https://github.com/claraverse/og-proxy">GITHUB</a>
+      <a href="https://github.com/claraverse/og-proxy#api-reference">API DOCS</a>
+      <a href="https://0g.ai">0G NETWORK</a>
+      <a href="https://claraverse.ai">CLARAVERSE</a>
+    </div>
+    <div class="copy">Built by <a href="https://claraverse.ai">Claraverse</a> &bull; Powered by <a href="https://0g.ai">0G Network</a> &bull; MIT License</div>
+  </div>
+</footer>
+
+</body>
+</html>

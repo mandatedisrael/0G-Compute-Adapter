@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0G Compute Adapter</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 248 120'%3E%3Cpath d='M247.994 63.4189C246.43 94.8449 220.164 119.85 187.993 119.85C154.815 119.85 127.918 93.2547 127.918 60.4481C127.918 27.6413 154.815 1.04688 187.993 1.04688C219.144 1.04688 244.758 24.491 247.772 54.5085H220.49C217.665 39.3007 204.19 27.7779 187.994 27.7779C169.745 27.7779 154.952 42.4049 154.952 60.4481C154.952 78.4922 169.745 93.1192 187.994 93.1192C202.003 93.1192 213.974 84.498 218.782 72.3291H172.974V63.4189H247.994Z' fill='%237c3aed'/%3E%3Cpath d='M19.7719 104.311C43.3526 125.438 79.8058 124.755 102.555 102.262C126.015 79.064 126.015 41.4537 102.555 18.2555C79.0936-4.94194 41.0564-4.94194 17.5956 18.2555C-4.43161 40.0359-5.77756 74.5211 13.5575 97.8546L32.8486 78.78C23.9713 66.0513 25.2587 48.4817 36.7116 37.1576C49.6149 24.3986 70.5357 24.3986 83.4394 37.1576C96.3419 49.9163 96.3419 70.6022 83.4394 83.3611C73.5328 93.1562 58.9014 95.4318 46.7999 90.1865L79.1909 58.1583L72.8191 51.8587L19.7719 104.311Z' fill='%237c3aed'/%3E%3C/svg%3E">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+  :root {
+    --bg: #050507; --bg2: #0a0a0e; --card: #0e0e13;
+    --border: #19191f; --border2: #242430;
+    --text: #dcdce4; --text2: #8e8ea0; --dim: #55556a;
+    --accent: #7c3aed; --accent2: #a78bfa; --accent-bg: rgba(124,58,237,0.06);
+    --green: #10b981; --green-bg: rgba(16,185,129,0.08);
+    --red: #f43f5e; --red-bg: rgba(244,63,94,0.08);
+    --yellow: #eab308; --yellow-bg: rgba(234,179,8,0.06);
+    --blue: #3b82f6; --blue-bg: rgba(59,130,246,0.06);
+    --orange: #f59e0b; --orange-bg: rgba(245,158,11,0.06);
+    --mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --r: 3px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--accent); color: white; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 0; }
+
+  /* ── Layout ── */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar { width: 220px; background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  .main { flex: 1; overflow-y: auto; background: var(--bg2); }
+  .page { display: none; padding: 24px 28px; max-width: 1400px; }
+  .page.active { display: block; }
+
+  /* ── Sidebar ── */
+  .sidebar-brand { padding: 16px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .sidebar-brand svg { height: 22px; width: 22px; }
+  .sidebar-brand .brand-text { font-family: var(--mono); font-weight: 700; font-size: 15px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .sidebar-nav { padding: 8px 8px; flex: 1; }
+  .nav-section { font-family: var(--mono); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: var(--dim); padding: 14px 8px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 0; cursor: pointer; color: var(--dim); font-size: 14px; font-weight: 500; transition: color 0.1s; margin-bottom: 1px; border-left: 2px solid transparent; position: relative; }
+  .nav-item:hover { color: var(--text2); }
+  .nav-item.active { color: var(--text); border-left-color: var(--accent); background: var(--accent-bg); }
+  .nav-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.5; }
+  .nav-item.active svg { opacity: 1; }
+  .sidebar-footer { padding: 12px 16px; border-top: 1px solid var(--border); }
+  .sidebar-status { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 13px; color: var(--dim); }
+  .status-dot { width: 5px; height: 5px; border-radius: 0; background: var(--green); flex-shrink: 0; }
+  .status-dot.offline { background: var(--red); }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .status-dot { animation: blink 2s step-end infinite; }
+  .sidebar-footer .logout-btn { margin-top: 6px; font-family: var(--mono); font-size: 13px; color: var(--dim); cursor: pointer; padding: 2px 0; letter-spacing: 0.5px; }
+  .sidebar-footer .logout-btn:hover { color: var(--red); }
+
+  /* ── Mobile ── */
+  .hamburger { display: none; position: fixed; top: 10px; left: 10px; z-index: 1001; background: var(--bg); border: 1px solid var(--border); padding: 6px 8px; cursor: pointer; color: var(--text); }
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999; }
+
+  /* ── Page Header ── */
+  .page-header { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+  .page-header div:first-child { flex: 1; }
+  .page-header h1 { font-family: var(--mono); font-size: 20px; font-weight: 700; margin-bottom: 2px; letter-spacing: -0.3px; }
+  .page-header p { color: var(--dim); font-size: 13px; font-family: var(--mono); }
+
+  /* ── Cards ── */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .card-title { font-family: var(--mono); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--dim); }
+
+  /* ── 0G Icon ── */
+  .og-icon { display: inline-block; vertical-align: -1px; margin-left: 2px; }
+  .og-icon svg { width: 100%; height: 100%; }
+
+  /* ── Stats ── */
+  .stats-row { display: flex; gap: 1px; margin-bottom: 20px; background: var(--border); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+  .stat-item { flex: 1; background: var(--card); padding: 14px 16px; position: relative; }
+  .stat-item::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; }
+  .stat-item.purple::after { background: var(--accent); }
+  .stat-item.blue::after { background: var(--blue); }
+  .stat-item.green::after { background: var(--green); }
+  .stat-item.orange::after { background: var(--orange); }
+  .stat-item.red::after { background: var(--red); }
+  .stat-label { font-family: var(--mono); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--dim); margin-bottom: 4px; }
+  .stat-value { font-family: var(--mono); font-size: 26px; font-weight: 800; letter-spacing: -1px; }
+  .stat-sub { font-family: var(--mono); font-size: 13px; color: var(--dim); margin-top: 2px; }
+
+  /* ── Low Balance ── */
+  .low-balance-banner { display: none; background: var(--bg); border-left: 2px solid var(--orange); padding: 10px 14px; margin-bottom: 16px; font-family: var(--mono); font-size: 13px; color: var(--orange); align-items: center; gap: 8px; }
+  .low-balance-banner.show { display: flex; }
+
+  /* ── Chart ── */
+  .chart-wrap { position: relative; height: 140px; padding: 12px 12px 24px 36px; }
+  .chart-wrap canvas { width: 100% !important; height: 100% !important; }
+  .chart-legend { display: flex; gap: 14px; font-family: var(--mono); font-size: 13px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+  .chart-legend span::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 4px; vertical-align: middle; }
+  .chart-legend .leg-req::before { background: var(--accent); }
+  .chart-legend .leg-cost::before { background: var(--orange); }
+  .chart-legend .leg-err::before { background: var(--red); }
+
+  /* ── Grids ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+
+  /* ── Tables ── */
+  .data-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px; }
+  .data-table th { text-align: left; padding: 8px 10px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--dim); border-bottom: 1px solid var(--border); }
+  .data-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); color: var(--text2); }
+  .data-table tbody tr:hover { background: rgba(124,58,237,0.03); }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+
+  /* ── Badges ── */
+  .badge { display: inline-flex; align-items: center; padding: 2px 6px; border-radius: 2px; font-family: var(--mono); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge.ok { background: var(--green-bg); color: var(--green); }
+  .badge.error { background: var(--red-bg); color: var(--red); }
+  .badge.tool { background: var(--accent-bg); color: var(--accent2); }
+  .badge.info { background: var(--blue-bg); color: var(--blue); }
+  .badge.warn { background: var(--yellow-bg); color: var(--yellow); }
+  .badge-sm { font-size: 13px; padding: 1px 5px; }
+
+  /* ── Buttons & Inputs ── */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; background: var(--accent); color: white; border: none; border-radius: var(--r); padding: 9px 16px; font-family: var(--mono); font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.1s; letter-spacing: 0.3px; }
+  .btn:hover { background: var(--accent2); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-sm { padding: 4px 10px; font-size: 13px; }
+  .btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent2); }
+  .btn-danger { background: var(--red); }
+  .btn-danger:hover { background: #e11d48; }
+  .input { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r); padding: 9px 12px; color: var(--text); font-family: var(--mono); font-size: 14px; outline: none; transition: border-color 0.1s; width: 100%; }
+  .input:focus { border-color: var(--accent); }
+  .input::placeholder { color: var(--dim); }
+  textarea.input { resize: vertical; min-height: 70px; }
+  select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2355556a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 24px; cursor: pointer; }
+
+  /* ── Wallet ── */
+  .wallet-addr { font-family: var(--mono); font-size: 13px; color: var(--dim); word-break: break-all; background: var(--bg); padding: 8px 10px; border-left: 2px solid var(--accent); margin-bottom: 12px; cursor: pointer; }
+  .wallet-addr:hover { color: var(--accent2); }
+  .wallet-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .wallet-row:last-child { border-bottom: none; }
+  .wallet-row .wlabel { color: var(--dim); font-family: var(--mono); font-size: 13px; }
+  .wallet-row .wvalue { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+  .fund-row { display: flex; gap: 6px; margin-top: 12px; }
+
+  /* ── Model cards ── */
+  .model-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; border-left: 2px solid var(--border2); transition: border-left-color 0.1s; }
+  .model-card:hover { border-left-color: var(--accent); }
+  .model-card .mc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .model-card .mc-name { font-family: var(--mono); font-weight: 700; font-size: 13px; }
+  .model-card .mc-id { font-family: var(--mono); font-size: 13px; color: var(--dim); margin-top: 2px; cursor: pointer; }
+  .model-card .mc-id:hover { color: var(--accent2); }
+  .model-card .mc-badges { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 6px; }
+  .model-card .mc-provider { font-family: var(--mono); font-size: 13px; color: var(--dim); margin-top: 6px; }
+  .model-card .mc-stats { font-family: var(--mono); font-size: 13px; color: var(--text2); margin-top: 4px; display: flex; gap: 10px; }
+
+  /* ── Providers ── */
+  .prov-item { background: var(--bg); border-left: 2px solid var(--green); padding: 10px 12px; margin-bottom: 6px; }
+  .prov-header { display: flex; justify-content: space-between; align-items: center; }
+  .prov-model { font-family: var(--mono); font-weight: 600; font-size: 13px; }
+  .prov-bal { color: var(--green); font-family: var(--mono); font-weight: 700; font-size: 13px; }
+  .prov-addr { font-family: var(--mono); font-size: 13px; color: var(--dim); margin-top: 2px; }
+  .prov-actions { display: flex; gap: 4px; margin-top: 8px; }
+  .prov-actions input { width: 80px; }
+
+  /* ── Playground ── */
+  .pg-tab { font-family: var(--mono); padding: 5px 12px; border: 1px solid var(--border); background: transparent; color: var(--dim); font-size: 13px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.1s; }
+  .pg-tab:first-child { border-radius: var(--r) 0 0 var(--r); }
+  .pg-tab:last-child { border-radius: 0 var(--r) var(--r) 0; }
+  .pg-tab:not(:first-child) { border-left: none; }
+  .pg-tab:hover { color: var(--text2); }
+  .pg-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .pg-mode { display: none; }
+  .pg-mode.active { display: block; }
+  .pg-result-img { max-width: 100%; border-radius: var(--r); margin-top: 6px; border: 1px solid var(--border); }
+  .playground-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; height: calc(100vh - 180px); }
+  .pg-panel { display: flex; flex-direction: column; }
+  .pg-messages { flex: 1; overflow-y: auto; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 10px; }
+  .pg-msg { margin-bottom: 10px; padding: 8px 10px; border-radius: var(--r); font-size: 13px; line-height: 1.6; }
+  .pg-msg.user { background: var(--accent-bg); border-left: 2px solid var(--accent); margin-left: 15%; }
+  .pg-msg.assistant { background: var(--card); border-left: 2px solid var(--green); margin-right: 15%; }
+  .pg-msg.system { background: var(--yellow-bg); border-left: 2px solid var(--yellow); font-size: 13px; color: var(--yellow); }
+  .pg-msg .msg-role { font-family: var(--mono); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--dim); margin-bottom: 3px; }
+  .pg-msg.user .msg-role { color: var(--accent2); }
+  .pg-msg.assistant .msg-role { color: var(--green); }
+  .pg-msg pre { background: var(--bg); padding: 8px; border-radius: var(--r); overflow-x: auto; font-family: var(--mono); font-size: 13px; margin-top: 4px; white-space: pre-wrap; word-break: break-word; }
+  .pg-input-row { display: flex; gap: 6px; }
+  .pg-config { display: flex; flex-direction: column; gap: 10px; }
+  .pg-config label { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; display: block; }
+  .pg-meta { display: flex; gap: 12px; font-family: var(--mono); font-size: 13px; color: var(--dim); padding: 6px 0; }
+
+  /* ── Logs ── */
+  .log-filters { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .log-entry { padding: 8px 10px; background: var(--card); border-left: 2px solid var(--border); margin-bottom: 4px; font-size: 13px; cursor: pointer; transition: border-left-color 0.1s; }
+  .log-entry:hover { border-left-color: var(--accent); }
+  .log-entry .log-header { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+  .log-entry .log-time { color: var(--dim); font-family: var(--mono); font-size: 13px; }
+  .log-entry .log-cat { font-weight: 600; font-size: 13px; }
+  .log-entry .log-msg { color: var(--text2); font-family: var(--mono); font-size: 13px; }
+  .log-entry .log-detail { display: none; margin-top: 6px; padding: 6px 8px; background: var(--bg); font-family: var(--mono); font-size: 13px; white-space: pre-wrap; word-break: break-all; color: var(--text2); }
+  .log-entry.expanded .log-detail { display: block; }
+
+  /* ── Usage rows ── */
+  .usage-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  .usage-row:last-child { border-bottom: none; }
+  .usage-row .ur-name { font-family: var(--mono); font-weight: 600; font-size: 13px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .usage-row .ur-stats { display: flex; gap: 12px; font-family: var(--mono); font-size: 13px; color: var(--text2); }
+
+  /* ── API Keys ── */
+  .key-item { background: var(--card); border-left: 2px solid var(--accent); padding: 12px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+  .key-info { flex: 1; }
+  .key-name { font-family: var(--mono); font-weight: 700; font-size: 13px; }
+  .key-meta { font-family: var(--mono); font-size: 13px; color: var(--dim); margin-top: 3px; letter-spacing: 0.3px; }
+  .key-value { font-family: var(--mono); font-size: 13px; color: var(--text2); margin-top: 3px; cursor: pointer; }
+  .key-value:hover { color: var(--accent2); }
+  .key-actions { display: flex; gap: 4px; align-items: center; }
+
+  /* ── Toast ── */
+  .toast { position: fixed; bottom: 16px; right: 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 8px 16px; font-family: var(--mono); font-size: 13px; display: none; z-index: 1000; }
+  .toast.success { border-left: 2px solid var(--green); }
+  .toast.error { border-left: 2px solid var(--red); }
+
+  /* ── Empty ── */
+  .empty { color: var(--dim); font-family: var(--mono); font-size: 13px; text-align: center; padding: 28px 16px; letter-spacing: 0.5px; }
+
+  /* ── Login ── */
+  .login-overlay { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 9999; justify-content: center; align-items: center; }
+  .login-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 40px 36px; width: 380px; text-align: center; }
+  .login-card .login-brand { margin-bottom: 16px; }
+  .login-card .login-brand svg { height: 40px; width: 40px; }
+  .login-card h1 { font-family: var(--mono); font-size: 20px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.3px; }
+  .login-card h1 span { color: var(--accent2); }
+  .login-card p { color: var(--dim); font-family: var(--mono); font-size: 13px; margin-bottom: 20px; letter-spacing: 0.5px; }
+  .login-card .login-err { color: var(--red); font-family: var(--mono); font-size: 13px; margin-top: 10px; min-height: 16px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 1200px) { .stats-row { flex-wrap: wrap; } .stat-item { min-width: 140px; } }
+  @media (max-width: 1100px) { .grid-3 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } .playground-layout { grid-template-columns: 1fr; height: auto; } .stats-row { flex-direction: column; } }
+  @media (max-width: 768px) {
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 1000; transform: translateX(-100%); transition: transform 0.2s; }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay.show { display: block; }
+    .hamburger { display: block; }
+    .page { padding: 16px 14px; padding-top: 48px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-brand">
+      <svg viewBox="0 0 248 120" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M247.994 63.4189C246.43 94.8449 220.164 119.85 187.993 119.85C154.815 119.85 127.918 93.2547 127.918 60.4481C127.918 27.6413 154.815 1.04688 187.993 1.04688C219.144 1.04688 244.758 24.491 247.772 54.5085H220.49C217.665 39.3007 204.19 27.7779 187.994 27.7779C169.745 27.7779 154.952 42.4049 154.952 60.4481C154.952 78.4922 169.745 93.1192 187.994 93.1192C202.003 93.1192 213.974 84.498 218.782 72.3291H172.974V63.4189H247.994Z" fill="white"/><path d="M19.7719 104.311C43.3526 125.438 79.8058 124.755 102.555 102.262C126.015 79.064 126.015 41.4537 102.555 18.2555C79.0936 -4.94194 41.0564 -4.94194 17.5956 18.2555C-4.43161 40.0359 -5.77756 74.5211 13.5575 97.8546L32.8486 78.78C23.9713 66.0513 25.2587 48.4817 36.7116 37.1576C49.6149 24.3986 70.5357 24.3986 83.4394 37.1576C96.3419 49.9163 96.3419 70.6022 83.4394 83.3611C73.5328 93.1562 58.9014 95.4318 46.7999 90.1865L79.1909 58.1583L72.8191 51.8587L19.7719 104.311Z" fill="white"/></svg>
+    </div>
+    <h1><span>0G</span> Compute Adapter</h1>
+    <p>authenticate with your api key</p>
+    <input type="password" id="loginKey" class="input" placeholder="sk-0g-... or admin-..." style="margin-bottom:10px;">
+    <button class="btn" onclick="login()" style="width:100%;padding:10px;">sign in</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- Mobile -->
+<div class="hamburger" id="hamburger" onclick="toggleSidebar()">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- App -->
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <svg viewBox="0 0 248 120" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M247.994 63.4189C246.43 94.8449 220.164 119.85 187.993 119.85C154.815 119.85 127.918 93.2547 127.918 60.4481C127.918 27.6413 154.815 1.04688 187.993 1.04688C219.144 1.04688 244.758 24.491 247.772 54.5085H220.49C217.665 39.3007 204.19 27.7779 187.994 27.7779C169.745 27.7779 154.952 42.4049 154.952 60.4481C154.952 78.4922 169.745 93.1192 187.994 93.1192C202.003 93.1192 213.974 84.498 218.782 72.3291H172.974V63.4189H247.994Z" fill="white"/><path d="M19.7719 104.311C43.3526 125.438 79.8058 124.755 102.555 102.262C126.015 79.064 126.015 41.4537 102.555 18.2555C79.0936 -4.94194 41.0564 -4.94194 17.5956 18.2555C-4.43161 40.0359 -5.77756 74.5211 13.5575 97.8546L32.8486 78.78C23.9713 66.0513 25.2587 48.4817 36.7116 37.1576C49.6149 24.3986 70.5357 24.3986 83.4394 37.1576C96.3419 49.9163 96.3419 70.6022 83.4394 83.3611C73.5328 93.1562 58.9014 95.4318 46.7999 90.1865L79.1909 58.1583L72.8191 51.8587L19.7719 104.311Z" fill="white"/></svg>
+      <div class="brand-text">Compute</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">overview</div>
+      <div class="nav-item active" data-page="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" data-page="models">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        Models
+      </div>
+      <div class="nav-section">tools</div>
+      <div class="nav-item" data-page="playground">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        Playground
+      </div>
+      <div class="nav-item" data-page="logs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+        Logs
+      </div>
+      <div class="nav-section">manage</div>
+      <div class="nav-item" data-page="keys">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        API Keys
+      </div>
+      <div class="nav-item" data-page="wallet">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 100 4 2 2 0 000-4z"/></svg>
+        Wallet
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-status"><span class="status-dot" id="statusDot"></span><span id="statusText">connecting...</span></div>
+      <div class="logout-btn" onclick="logout()">sign out</div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- Dashboard -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div><h1>Dashboard</h1><p>real-time overview</p></div>
+        <button class="btn btn-outline btn-sm" onclick="exportCSV()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          export
+        </button>
+      </div>
+
+      <div class="low-balance-banner" id="lowBalanceBanner">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span id="lowBalanceMsg"></span>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-item purple"><div class="stat-label">Requests</div><div class="stat-value" id="totalReqs">-</div><div class="stat-sub" id="uptime">-</div></div>
+        <div class="stat-item blue"><div class="stat-label">Tokens</div><div class="stat-value" id="totalTokens">-</div><div class="stat-sub" id="tokenBreak">-</div></div>
+        <div class="stat-item green"><div class="stat-label">Balance</div><div class="stat-value" id="walletBal">-</div><div class="stat-sub" id="walletAvail">-</div></div>
+        <div class="stat-item orange"><div class="stat-label">Spent</div><div class="stat-value" id="totalCost">-</div><div class="stat-sub" id="costRate">-</div></div>
+        <div class="stat-item red"><div class="stat-label">Errors</div><div class="stat-value" id="totalErrors">-</div><div class="stat-sub" id="errorRate">-</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <span class="card-title">usage / 24h</span>
+          <div class="chart-legend"><span class="leg-req">requests</span><span class="leg-cost">cost</span><span class="leg-err">errors</span></div>
+        </div>
+        <div class="chart-wrap"><canvas id="usageChart"></canvas></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">by model</span></div>
+          <div id="perModel"><div class="empty">no usage data</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">recent</span></div>
+          <div style="overflow-x:auto;max-height:360px;overflow-y:auto;">
+            <table class="data-table">
+              <thead><tr><th>time</th><th>model</th><th>tokens</th><th>cost</th><th>latency</th><th>status</th></tr></thead>
+              <tbody id="logBody"><tr><td colspan="6" class="empty">no requests</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Models -->
+    <div class="page" id="page-models">
+      <div class="page-header"><div><h1>Models</h1><p>auto-discovered from 0g network</p></div></div>
+      <div class="grid-3" id="modelGrid"><div class="empty">loading...</div></div>
+    </div>
+
+    <!-- Playground -->
+    <div class="page" id="page-playground">
+      <div class="page-header"><div><h1>Playground</h1><p>test chat, vision, image gen, transcription</p></div></div>
+      <div style="display:flex;margin-bottom:16px;">
+        <button class="pg-tab active" data-mode="chat" onclick="pgSwitchMode('chat')">chat</button>
+        <button class="pg-tab" data-mode="vision" onclick="pgSwitchMode('vision')">vision</button>
+        <button class="pg-tab" data-mode="image" onclick="pgSwitchMode('image')">image</button>
+        <button class="pg-tab" data-mode="audio" onclick="pgSwitchMode('audio')">audio</button>
+      </div>
+
+      <div class="pg-mode active" id="pgMode-chat">
+        <div class="playground-layout">
+          <div class="pg-panel">
+            <div class="pg-messages" id="pgMessages"><div class="empty">send a message</div></div>
+            <div class="pg-meta" id="pgMeta"></div>
+            <div class="pg-input-row">
+              <input type="text" class="input" id="pgInput" placeholder="type a message..." autocomplete="off">
+              <button class="btn" id="pgSend" onclick="pgSendMessage()">send</button>
+              <button class="btn btn-outline" onclick="pgClear()">clear</button>
+            </div>
+          </div>
+          <div class="pg-panel pg-config">
+            <div><label>model</label><select class="input" id="pgModel"></select></div>
+            <div><label>system prompt</label><textarea class="input" id="pgSystem" placeholder="you are a helpful assistant..." rows="2"></textarea></div>
+            <div><label>temperature</label><input type="range" id="pgTemp" min="0" max="2" step="0.1" value="0.7" style="width:100%;accent-color:var(--accent);"><div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:2px;"><span>0</span><span id="pgTempVal">0.7</span><span>2</span></div></div>
+            <div><label>max tokens</label><input type="number" class="input" id="pgMaxTokens" value="4096" min="1" max="60000"></div>
+            <div><label><input type="checkbox" id="pgStream" checked style="margin-right:4px;accent-color:var(--accent);">stream</label></div>
+            <div><label>format</label><select class="input" id="pgFormat"><option value="text">text</option><option value="json_object">json</option></select></div>
+            <div><label>tools (json)</label><textarea class="input" id="pgTools" placeholder='[{"type":"function",...}]' rows="2"></textarea></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pg-mode" id="pgMode-vision">
+        <div class="playground-layout">
+          <div class="pg-panel">
+            <div class="pg-messages" id="pgVisionMessages"><div class="empty">provide an image url</div></div>
+            <div class="pg-meta" id="pgVisionMeta"></div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <input type="url" class="input" id="pgImageUrl" placeholder="https://..." autocomplete="off">
+              <div class="pg-input-row">
+                <input type="text" class="input" id="pgVisionInput" placeholder="what's in this image?" autocomplete="off">
+                <button class="btn" onclick="pgSendVision()">analyze</button>
+                <button class="btn btn-outline" onclick="$('pgVisionMessages').innerHTML='<div class=empty>provide an image url</div>';$('pgVisionMeta').innerHTML='';">clear</button>
+              </div>
+            </div>
+          </div>
+          <div class="pg-panel pg-config">
+            <div><label>model</label><select class="input" id="pgVisionModel"></select></div>
+            <div><label>max tokens</label><input type="number" class="input" id="pgVisionMaxTokens" value="4096" min="1" max="60000"></div>
+            <div style="border-left:2px solid var(--blue);padding:8px 10px;font-size:11px;color:var(--text2);line-height:1.5;"><strong style="color:var(--text)">auto-routes</strong> to vision model regardless of selection</div>
+            <div><label>preview</label><div id="pgImagePreview" style="background:var(--bg);border:1px solid var(--border);padding:16px;text-align:center;min-height:80px;display:flex;align-items:center;justify-content:center;"><span style="color:var(--dim);font-family:var(--mono);font-size:10px;">no image</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pg-mode" id="pgMode-image">
+        <div class="playground-layout">
+          <div class="pg-panel">
+            <div class="pg-messages" id="pgImgMessages"><div class="empty">describe what to generate</div></div>
+            <div class="pg-meta" id="pgImgMeta"></div>
+            <div class="pg-input-row">
+              <input type="text" class="input" id="pgImgPrompt" placeholder="a futuristic city..." autocomplete="off">
+              <button class="btn" onclick="pgGenImage()">generate</button>
+            </div>
+          </div>
+          <div class="pg-panel pg-config">
+            <div><label>model</label><select class="input" id="pgImgModel"></select></div>
+            <div><label>size</label><select class="input" id="pgImgSize"><option value="1024x1024">1024x1024</option><option value="512x512">512x512</option><option value="1024x768">1024x768</option><option value="768x1024">768x1024</option></select></div>
+            <div><label>count</label><select class="input" id="pgImgN"><option value="1">1</option><option value="2">2</option><option value="4">4</option></select></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pg-mode" id="pgMode-audio">
+        <div class="playground-layout">
+          <div class="pg-panel">
+            <div class="pg-messages" id="pgAudioMessages"><div class="empty">upload audio to transcribe</div></div>
+            <div class="pg-meta" id="pgAudioMeta"></div>
+            <div class="pg-input-row">
+              <input type="file" id="pgAudioFile" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.webm" class="input" style="padding:5px 8px;">
+              <button class="btn" onclick="pgTranscribe()">transcribe</button>
+            </div>
+          </div>
+          <div class="pg-panel pg-config">
+            <div><label>model</label><select class="input" id="pgAudioModel"></select></div>
+            <div style="border-left:2px solid var(--green);padding:8px 10px;font-size:11px;color:var(--text2);line-height:1.5;">whisper large v3 &middot; mp3, wav, m4a, ogg, flac, webm</div>
+            <div><label>preview</label><div id="pgAudioPreview" style="background:var(--bg);border:1px solid var(--border);padding:10px;"><span style="color:var(--dim);font-family:var(--mono);font-size:10px;">no file</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="page" id="page-logs">
+      <div class="page-header"><div><h1>Logs</h1><p>persistent jsonl logs</p></div></div>
+      <div class="log-filters">
+        <select class="input" id="logLevel" style="width:100px;"><option value="">all</option><option value="info">info</option><option value="warn">warn</option><option value="error">error</option></select>
+        <select class="input" id="logCat" style="width:120px;"><option value="">all</option><option value="request">request</option><option value="response">response</option><option value="tool-parse">tool-parse</option><option value="upstream">upstream</option><option value="image">image</option><option value="audio">audio</option><option value="keys">keys</option></select>
+        <select class="input" id="logDays" style="width:90px;"><option value="1">today</option><option value="3">3 days</option><option value="7">7 days</option></select>
+        <button class="btn btn-outline btn-sm" onclick="loadLogs()">refresh</button>
+      </div>
+      <div id="logEntries"><div class="empty">click refresh</div></div>
+    </div>
+
+    <!-- API Keys -->
+    <div class="page" id="page-keys">
+      <div class="page-header">
+        <div><h1>API Keys</h1><p>rate limited to <span id="rateLimitDisplay">60</span> req/min per key</p></div>
+        <button class="btn btn-sm" onclick="showCreateKey()">+ create</button>
+      </div>
+      <div id="createKeyForm" style="display:none;margin-bottom:16px;">
+        <div class="card">
+          <div style="display:flex;gap:6px;align-items:end;">
+            <div style="flex:1"><label style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">name</label><input type="text" class="input" id="newKeyName" placeholder="production, testing..."></div>
+            <button class="btn" onclick="createKey()">create</button>
+            <button class="btn btn-outline" onclick="$('createKeyForm').style.display='none'">cancel</button>
+          </div>
+        </div>
+      </div>
+      <div id="keysList"><div class="empty">loading...</div></div>
+    </div>
+
+    <!-- Wallet -->
+    <div class="page" id="page-wallet">
+      <div class="page-header"><div><h1>Wallet</h1><p>0g token management</p></div></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">balance</span></div>
+          <div class="wallet-addr" id="walletAddr" onclick="copyText(this.textContent)" title="click to copy">loading...</div>
+          <div>
+            <div class="wallet-row"><span class="wlabel">native</span><span class="wvalue" id="nativeBal">-</span></div>
+            <div class="wallet-row"><span class="wlabel">ledger</span><span class="wvalue" id="ledgerBal">-</span></div>
+            <div class="wallet-row"><span class="wlabel">locked</span><span class="wvalue" id="lockedBal">-</span></div>
+            <div class="wallet-row"><span class="wlabel">available</span><span class="wvalue" id="availBal">-</span></div>
+          </div>
+          <div class="fund-row">
+            <input type="number" class="input" id="depositAmt" placeholder="amount" step="0.1" min="0.1" style="flex:1;">
+            <button class="btn" onclick="deposit()">deposit</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">providers</span></div>
+          <div id="providerList"><div class="empty">loading...</div></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function toggleSidebar() { $('sidebar').classList.toggle('open'); $('sidebarOverlay').classList.toggle('show'); }
+
+document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    $('page-' + item.dataset.page).classList.add('active');
+    if (item.dataset.page === 'logs') loadLogs();
+    if (item.dataset.page === 'keys') refreshKeys();
+    $('sidebar').classList.remove('open');
+    $('sidebarOverlay').classList.remove('show');
+  });
+});
+
+function showToast(msg, type = 'success') { const t = $('toast'); t.textContent = msg; t.className = `toast ${type}`; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000); }
+function fmt(n) { if (n >= 1e6) return (n/1e6).toFixed(1)+'M'; if (n >= 1e3) return (n/1e3).toFixed(1)+'K'; return String(n); }
+function fmtTime(s) { if (s < 60) return s+'s'; if (s < 3600) return Math.floor(s/60)+'m'; if (s < 86400) return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m'; return Math.floor(s/86400)+'d '+Math.floor((s%86400)/3600)+'h'; }
+function fmtBal(v) { const n = parseFloat(v); if (isNaN(n)) return '0'; return n < 0.01 ? n.toFixed(6) : n.toFixed(4); }
+const ogIcon = (color='currentColor', size=12) => `<span class="og-icon" style="width:${size}px;height:${size}px"><svg viewBox="0 0 248 120" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M247.994 63.4189C246.43 94.8449 220.164 119.85 187.993 119.85C154.815 119.85 127.918 93.2547 127.918 60.4481C127.918 27.6413 154.815 1.04688 187.993 1.04688C219.144 1.04688 244.758 24.491 247.772 54.5085H220.49C217.665 39.3007 204.19 27.7779 187.994 27.7779C169.745 27.7779 154.952 42.4049 154.952 60.4481C154.952 78.4922 169.745 93.1192 187.994 93.1192C202.003 93.1192 213.974 84.498 218.782 72.3291H172.974V63.4189H247.994Z" fill="${color}"/><path d="M19.7719 104.311C43.3526 125.438 79.8058 124.755 102.555 102.262C126.015 79.064 126.015 41.4537 102.555 18.2555C79.0936 -4.94194 41.0564 -4.94194 17.5956 18.2555C-4.43161 40.0359 -5.77756 74.5211 13.5575 97.8546L32.8486 78.78C23.9713 66.0513 25.2587 48.4817 36.7116 37.1576C49.6149 24.3986 70.5357 24.3986 83.4394 37.1576C96.3419 49.9163 96.3419 70.6022 83.4394 83.3611C73.5328 93.1562 58.9014 95.4318 46.7999 90.1865L79.1909 58.1583L72.8191 51.8587L19.7719 104.311Z" fill="${color}"/></svg></span>`;
+function copyText(text) { navigator.clipboard.writeText(text).then(() => showToast('copied')).catch(() => {}); }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Chart ──
+function drawChart(hourly) {
+  const canvas = $('usageChart'); if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width - 48; canvas.height = rect.height - 36;
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const now = new Date();
+  const hours = [];
+  for (let i = 23; i >= 0; i--) {
+    const d = new Date(now - i * 3600000);
+    const key = d.toISOString().slice(0, 13);
+    const found = (hourly || []).find(h => h.hour === key);
+    hours.push({ label: d.getHours().toString().padStart(2,'0'), requests: found?.requests||0, cost: found?.cost||0, errors: found?.errors||0 });
+  }
+  const maxReq = Math.max(1, ...hours.map(h => h.requests));
+  const barW = W / 24;
+
+  // grid
+  ctx.strokeStyle = '#19191f'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 3; i++) { const y = Math.round(H*i/3)+0.5; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // bars
+  hours.forEach((h, i) => {
+    const x = i * barW + 1; const w = barW - 2;
+    const barH = Math.max(1, (h.requests / maxReq) * H);
+    ctx.fillStyle = h.errors > 0 ? '#f43f5e' : '#7c3aed';
+    ctx.globalAlpha = 0.6;
+    ctx.fillRect(x, H - barH, w, barH);
+    ctx.globalAlpha = 1;
+    if (h.cost > 0) {
+      const maxCost = Math.max(0.001, ...hours.map(hh => hh.cost));
+      const cy = H - (h.cost / maxCost) * H * 0.7;
+      ctx.fillStyle = '#f59e0b'; ctx.fillRect(x + w/2 - 1, cy - 1, 3, 3);
+    }
+    if (i % 4 === 0) { ctx.fillStyle = '#55556a'; ctx.font = '9px "JetBrains Mono", monospace'; ctx.textAlign = 'center'; ctx.fillText(h.label+':00', x+w/2, H+12); }
+  });
+
+  ctx.fillStyle = '#55556a'; ctx.font = '9px "JetBrains Mono", monospace'; ctx.textAlign = 'right';
+  for (let i = 0; i <= 3; i++) { ctx.fillText(Math.round(maxReq*(3-i)/3), -4, H*i/3+4); }
+}
+
+// ── Data ──
+let usageData = null;
+async function refreshUsage() {
+  try {
+    const r = await fetch('/api/usage'); const d = await r.json(); usageData = d;
+    $('totalReqs').textContent = fmt(d.total_requests);
+    $('totalTokens').textContent = fmt(d.total_tokens);
+    $('totalErrors').textContent = fmt(d.total_errors);
+    $('uptime').textContent = fmtTime(d.uptime_seconds);
+    let pIn=0,pOut=0;
+    for (const m of Object.values(d.per_model)) { pIn+=m.prompt_tokens; pOut+=m.completion_tokens; }
+    $('tokenBreak').textContent = `${fmt(pIn)} in / ${fmt(pOut)} out`;
+    const rate = d.total_requests > 0 ? ((d.total_errors/d.total_requests)*100).toFixed(1) : '0.0';
+    $('errorRate').textContent = rate+'% error rate';
+    const totalCost = d.total_cost||0;
+    $('totalCost').innerHTML = (totalCost<0.01?totalCost.toFixed(6):totalCost.toFixed(4)) + ogIcon('#f59e0b',14);
+    const avgCost = d.total_requests>0 ? (totalCost/d.total_requests) : 0;
+    $('costRate').innerHTML = `~${avgCost.toFixed(6)}${ogIcon('#f59e0b',9)}/req`;
+    drawChart(d.hourly);
+
+    const pm = $('perModel'); const models = Object.entries(d.per_model);
+    if (!models.length) { pm.innerHTML = '<div class="empty">no data</div>'; }
+    else { pm.innerHTML = models.map(([name,s]) => `<div class="usage-row"><span class="ur-name" title="${escHtml(name)}">${escHtml(name.split('/').pop())}</span><span class="ur-stats"><span>${s.requests} req</span><span>${fmt(s.total_tokens)} tok</span><span style="color:var(--accent)">${(s.cost||0).toFixed(4)}${ogIcon('var(--accent)',9)}</span><span>${s.avg_latency||0}ms</span><span>${s.errors} err</span></span></div>`).join(''); }
+
+    const tbody = $('logBody');
+    if (!d.recent?.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">no requests</td></tr>'; }
+    else { tbody.innerHTML = d.recent.slice(0,30).map(r => { const time=new Date(r.timestamp).toLocaleTimeString(); const badge=r.status==='error'?'error':r.status==='tool_calls'?'tool':'ok'; const label=r.status==='tool_calls'?'tools':r.status; const model=r.model?.split('/').pop()||r.model; const cost=r.cost?r.cost.toFixed(6):'0'; return `<tr><td>${time}</td><td>${escHtml(model)}</td><td>${r.prompt_tokens||0}/${r.completion_tokens||0}</td><td style="color:var(--accent)">${cost}${ogIcon('var(--accent)',8)}</td><td>${r.duration_ms}ms</td><td><span class="badge ${badge}">${label}</span></td></tr>`; }).join(''); }
+
+    $('statusDot').className = 'status-dot'; $('statusText').textContent = 'online';
+  } catch { $('statusDot').className = 'status-dot offline'; $('statusText').textContent = 'offline'; }
+}
+
+async function refreshWallet() {
+  try {
+    const r = await fetch('/api/wallet'); const d = await r.json();
+    $('walletAddr').textContent = d.address;
+    $('nativeBal').innerHTML = fmtBal(d.native_balance)+ogIcon('var(--text)',10);
+    $('ledgerBal').innerHTML = fmtBal(d.ledger_balance)+ogIcon('var(--text)',10);
+    $('lockedBal').innerHTML = fmtBal(d.locked)+ogIcon('var(--text)',10);
+    $('availBal').innerHTML = fmtBal(d.available)+ogIcon('var(--text)',10);
+    $('walletBal').innerHTML = fmtBal(d.ledger_balance)+ogIcon('#10b981',14);
+    $('walletAvail').innerHTML = fmtBal(d.available)+ogIcon('#10b981',9)+' avail';
+    const avail = parseFloat(d.available);
+    if (!isNaN(avail) && avail < 1) { $('lowBalanceMsg').innerHTML = `low balance: ${fmtBal(d.available)}${ogIcon('#f59e0b',10)} available`; $('lowBalanceBanner').classList.add('show'); }
+    else { $('lowBalanceBanner').classList.remove('show'); }
+    const pl = $('providerList');
+    if (!d.providers?.length) { pl.innerHTML = '<div class="empty">no providers</div>'; }
+    else { pl.innerHTML = d.providers.map(p => `<div class="prov-item"><div class="prov-header"><span class="prov-model">${escHtml(p.model)}</span><span class="prov-bal">${fmtBal(p.balance)}${ogIcon('#10b981',10)}</span></div><div class="prov-addr">${p.address}</div><div class="prov-actions"><input type="number" class="input" id="tf-${p.address.slice(2,10)}" placeholder="amt" step="0.5" min="0.1"><button class="btn btn-sm btn-outline" onclick="transfer('${p.address}','tf-${p.address.slice(2,10)}')">transfer</button></div></div>`).join(''); }
+  } catch {}
+}
+
+let cachedModels = [];
+async function refreshModels() {
+  try { const r = await fetch('/api/models'); cachedModels = await r.json(); renderModelGrid(); updatePlaygroundModels(); } catch {}
+}
+
+function getModelCapabilities(m) { const caps=[]; if(m.type==='chatbot'){caps.push('chat','streaming','tool-calling');} if(m.type==='text-to-image')caps.push('image-gen'); if(m.type==='speech-to-text')caps.push('transcription'); const n=m.name.toLowerCase(); if(n.includes('vl')||n.includes('vision'))caps.push('vision'); return caps; }
+
+function renderModelGrid() {
+  const grid=$('modelGrid');
+  if(!cachedModels.length){grid.innerHTML='<div class="empty">no models</div>';return;}
+  grid.innerHTML = cachedModels.map(m => {
+    const caps=getModelCapabilities(m); const colors={chat:'info',streaming:'ok','tool-calling':'tool',vision:'warn','image-gen':'tool',transcription:'info'};
+    const stats=usageData?.per_model?.[m.ogModel||m.name];
+    const sh=stats?`<div class="mc-stats"><span>${stats.requests} req</span><span>${stats.avg_latency||0}ms avg</span><span>${(stats.cost||0).toFixed(4)}${ogIcon('var(--dim)',8)}</span></div>`:'';
+    return `<div class="model-card"><div class="mc-header"><div><div class="mc-name">${escHtml(m.name)}</div><div class="mc-id" onclick="copyText('${escHtml(m.ogModel||m.name)}')">${escHtml(m.ogModel||m.name)}</div></div><span class="badge ${m.type==='chatbot'?'info':m.type==='text-to-image'?'tool':'warn'}">${m.type}</span></div><div class="mc-badges">${caps.map(c=>`<span class="badge badge-sm ${colors[c]||'info'}">${c}</span>`).join('')}</div>${sh}<div class="mc-provider">${m.provider.slice(0,10)}...${m.provider.slice(-6)}</div></div>`;
+  }).join('');
+}
+
+// ── Wallet Actions ──
+async function deposit() { const amt=$('depositAmt').value; if(!amt||amt<=0) return showToast('enter amount','error'); try { const r=await fetch('/api/deposit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:Number(amt)})}); const d=await r.json(); if(d.success){showToast('deposited '+amt);$('depositAmt').value='';refreshWallet();}else showToast(d.error||'failed','error'); }catch(e){showToast(e.message,'error');} }
+async function transfer(provider,inputId) { const amt=$(inputId).value; if(!amt||amt<=0) return showToast('enter amount','error'); try { const r=await fetch('/api/transfer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider,amount:amt})}); const d=await r.json(); if(d.success){showToast('transferred '+amt);$(inputId).value='';refreshWallet();}else showToast(d.error||'failed','error'); }catch(e){showToast(e.message,'error');} }
+
+// ── API Keys ──
+async function refreshKeys() {
+  try { const r=await fetch('/api/keys'); const d=await r.json(); $('rateLimitDisplay').textContent=d.rate_limit||60;
+    const list=$('keysList'); if(!d.keys?.length){list.innerHTML='<div class="empty">no keys</div>';return;}
+    list.innerHTML=d.keys.map(k=>`<div class="key-item"><div class="key-info"><div class="key-name">${escHtml(k.name)}</div><div class="key-value" onclick="copyText('${escHtml(k.full_key)}')">${escHtml(k.key)}</div><div class="key-meta">created ${new Date(k.created).toLocaleDateString()} &middot; ${k.lastUsed?'last '+new Date(k.lastUsed).toLocaleString():'never used'} &middot; ${k.requests} req</div></div><div class="key-actions"><button class="btn btn-sm btn-outline" onclick="copyText('${escHtml(k.full_key)}')">copy</button><button class="btn btn-sm btn-danger" onclick="revokeKey('${escHtml(k.full_key)}','${escHtml(k.name)}')">revoke</button></div></div>`).join('');
+  } catch {}
+}
+function showCreateKey(){$('createKeyForm').style.display='block';$('newKeyName').focus();}
+async function createKey() { const name=$('newKeyName').value.trim()||'unnamed'; try { const r=await fetch('/api/keys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})}); const d=await r.json(); if(d.key){showToast('key created');copyText(d.key);$('createKeyForm').style.display='none';$('newKeyName').value='';refreshKeys();} }catch(e){showToast(e.message,'error');} }
+async function revokeKey(key,name) { if(!confirm(`revoke "${name}"?`))return; try { const r=await fetch(`/api/keys/${encodeURIComponent(key)}`,{method:'DELETE'}); const d=await r.json(); if(d.success){showToast('revoked');refreshKeys();}else showToast(d.error||'failed','error'); }catch(e){showToast(e.message,'error');} }
+function exportCSV(){window.location.href='/api/export/usage';}
+
+// ── Playground ──
+let pgHistory=[];
+const authHeaders=()=>sessionKey?{'Authorization':`Bearer ${sessionKey}`}:{};
+function pgSwitchMode(mode) { document.querySelectorAll('.pg-tab').forEach(t=>t.classList.toggle('active',t.dataset.mode===mode)); document.querySelectorAll('.pg-mode').forEach(m=>m.classList.remove('active')); $('pgMode-'+mode).classList.add('active'); }
+function updatePlaygroundModels() { const chat=cachedModels.filter(m=>m.type==='chatbot'); const img=cachedModels.filter(m=>m.type==='text-to-image'); const audio=cachedModels.filter(m=>m.type==='speech-to-text'); $('pgModel').innerHTML=chat.map(m=>`<option value="${escHtml(m.ogModel||m.name)}">${escHtml(m.name)}</option>`).join(''); $('pgVisionModel').innerHTML=chat.map(m=>`<option value="${escHtml(m.ogModel||m.name)}">${escHtml(m.name)}</option>`).join(''); $('pgImgModel').innerHTML=img.length?img.map(m=>`<option value="${escHtml(m.ogModel||m.name)}">${escHtml(m.name)}</option>`).join(''):'<option>none</option>'; $('pgAudioModel').innerHTML=audio.length?audio.map(m=>`<option value="${escHtml(m.ogModel||m.name)}">${escHtml(m.name)}</option>`).join(''):'<option>none</option>'; }
+
+$('pgTemp').addEventListener('input',()=>{$('pgTempVal').textContent=$('pgTemp').value;});
+$('pgInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();pgSendMessage();}});
+$('pgVisionInput').addEventListener('keydown',e=>{if(e.key==='Enter')pgSendVision();});
+$('pgImgPrompt').addEventListener('keydown',e=>{if(e.key==='Enter')pgGenImage();});
+$('newKeyName').addEventListener('keydown',e=>{if(e.key==='Enter')createKey();});
+$('pgImageUrl').addEventListener('input',()=>{ const url=$('pgImageUrl').value.trim(); $('pgImagePreview').innerHTML=url?`<img src="${escHtml(url)}" style="max-width:100%;max-height:160px;" onerror="this.outerHTML='<span style=color:var(--red);font-size:10px>failed</span>'">`:'<span style="color:var(--dim);font-family:var(--mono);font-size:10px;">no image</span>'; });
+$('pgAudioFile').addEventListener('change',()=>{ const file=$('pgAudioFile').files[0]; if(file){const url=URL.createObjectURL(file);$('pgAudioPreview').innerHTML=`<audio controls src="${url}" style="width:100%;height:32px;"></audio><div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:4px;">${escHtml(file.name)} (${(file.size/1024).toFixed(1)}KB)</div>`;} });
+
+function pgClear(){pgHistory=[];$('pgMessages').innerHTML='<div class="empty">send a message</div>';$('pgMeta').innerHTML='';}
+function pgRenderMsg(cid,role,content,isHtml) { const c=$(cid); if(c.querySelector('.empty'))c.innerHTML=''; const div=document.createElement('div'); div.className=`pg-msg ${role}`; const rl=role.charAt(0).toUpperCase()+role.slice(1); if(isHtml)div.innerHTML=`<div class="msg-role">${rl}</div>${content}`; else if(typeof content==='string')div.innerHTML=`<div class="msg-role">${rl}</div>${escHtml(content).replace(/\n/g,'<br>')}`; else div.innerHTML=`<div class="msg-role">${rl}</div><pre>${escHtml(JSON.stringify(content,null,2))}</pre>`; c.appendChild(div);c.scrollTop=c.scrollHeight;return div; }
+
+async function pgSendMessage() { const input=$('pgInput'); const msg=input.value.trim(); if(!msg)return; input.value=''; pgHistory.push({role:'user',content:msg}); pgRenderMsg('pgMessages','user',msg); const model=$('pgModel').value; const sys=$('pgSystem').value.trim(); const temp=parseFloat($('pgTemp').value); const max=parseInt($('pgMaxTokens').value)||4096; const stream=$('pgStream').checked; const format=$('pgFormat').value; let tools=null; try{const t=$('pgTools').value.trim();if(t)tools=JSON.parse(t);}catch{showToast('invalid json','error');return;} const messages=[]; if(sys)messages.push({role:'system',content:sys}); messages.push(...pgHistory); const body={model,messages,temperature:temp,max_tokens:max,stream}; if(format==='json_object')body.response_format={type:'json_object'}; if(tools)body.tools=tools; $('pgSend').disabled=true; const t0=Date.now(); try { if(stream) { const res=await fetch('/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify(body)}); const md=pgRenderMsg('pgMessages','assistant',''); let full=''; const reader=res.body.getReader(); const dec=new TextDecoder(); let buf=''; while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true}); while(buf.includes('\n')){const idx=buf.indexOf('\n');const line=buf.slice(0,idx).trim();buf=buf.slice(idx+1);if(!line||!line.startsWith('data:'))continue;const data=line.slice(5).trim();if(data==='[DONE]')break;try{const chunk=JSON.parse(data);const delta=chunk.choices?.[0]?.delta;if(delta?.content){full+=delta.content;md.innerHTML=`<div class="msg-role">Assistant</div>${escHtml(full).replace(/\n/g,'<br>')}`;$('pgMessages').scrollTop=$('pgMessages').scrollHeight;}if(delta?.tool_calls){full+=JSON.stringify(delta.tool_calls);md.innerHTML=`<div class="msg-role">Assistant</div><pre>${escHtml(full)}</pre>`;}}catch{}}} if(full)pgHistory.push({role:'assistant',content:full}); $('pgMeta').innerHTML=`<span>${escHtml(model)}</span><span>${Date.now()-t0}ms</span><span>streamed</span>`; } else { const res=await fetch('/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify(body)}); const result=await res.json(); if(result.error){pgRenderMsg('pgMessages','system','error: '+result.error.message);}else{const ch=result.choices?.[0];if(ch?.message?.tool_calls){pgRenderMsg('pgMessages','assistant',ch.message.tool_calls);pgHistory.push({role:'assistant',content:JSON.stringify(ch.message.tool_calls)});}else{const c=ch?.message?.content||'';pgRenderMsg('pgMessages','assistant',c);pgHistory.push({role:'assistant',content:c});}const u=result.usage||{};$('pgMeta').innerHTML=`<span>${escHtml(model)}</span><span>${u.prompt_tokens||0}/${u.completion_tokens||0} tok</span><span>${Date.now()-t0}ms</span>`;} } } catch(e){pgRenderMsg('pgMessages','system','error: '+e.message);} $('pgSend').disabled=false;$('pgInput').focus(); }
+
+async function pgSendVision() { const url=$('pgImageUrl').value.trim(); const q=$('pgVisionInput').value.trim(); if(!url)return showToast('enter image url','error'); if(!q)return showToast('enter question','error'); $('pgVisionInput').value=''; pgRenderMsg('pgVisionMessages','user',`<img src="${escHtml(url)}" class="pg-result-img" style="max-height:120px;"><br>${escHtml(q)}`,true); const model=$('pgVisionModel').value; const max=parseInt($('pgVisionMaxTokens').value)||4096; const t0=Date.now(); try { const res=await fetch('/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify({model,messages:[{role:'user',content:[{type:'text',text:q},{type:'image_url',image_url:{url}}]}],max_tokens:max})}); const r=await res.json(); if(r.error)pgRenderMsg('pgVisionMessages','system','error: '+r.error.message); else{pgRenderMsg('pgVisionMessages','assistant',r.choices?.[0]?.message?.content||'');const u=r.usage||{};$('pgVisionMeta').innerHTML=`<span>${escHtml(r.model||model)}</span><span>${u.prompt_tokens||0}/${u.completion_tokens||0}</span><span>${Date.now()-t0}ms</span>`;} }catch(e){pgRenderMsg('pgVisionMessages','system','error: '+e.message);} }
+
+async function pgGenImage() { const prompt=$('pgImgPrompt').value.trim(); if(!prompt)return showToast('enter prompt','error'); $('pgImgPrompt').value=''; pgRenderMsg('pgImgMessages','user',prompt); const ld=pgRenderMsg('pgImgMessages','assistant','generating...'); const model=$('pgImgModel').value; const size=$('pgImgSize').value; const n=parseInt($('pgImgN').value)||1; const t0=Date.now(); try { const res=await fetch('/v1/images/generations',{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify({model,prompt,n,size})}); const r=await res.json(); if(r.error){ld.innerHTML=`<div class="msg-role">Error</div>${escHtml(r.error.message)}`;ld.className='pg-msg system';}else{const imgs=(r.data||[]).map(d=>{const src=d.url||(d.b64_json?`data:image/png;base64,${d.b64_json}`:null);return src?`<img src="${escHtml(src)}" class="pg-result-img">`:'<span style="color:var(--dim)">no image</span>';}).join('');ld.innerHTML=`<div class="msg-role">Generated</div>${imgs||'none'}`;$('pgImgMeta').innerHTML=`<span>${escHtml(model)}</span><span>${r.data?.length||0} images</span><span>${Date.now()-t0}ms</span>`;} }catch(e){ld.innerHTML=`<div class="msg-role">Error</div>${escHtml(e.message)}`;ld.className='pg-msg system';} }
+
+async function pgTranscribe() { const file=$('pgAudioFile').files[0]; if(!file)return showToast('select file','error'); pgRenderMsg('pgAudioMessages','user',`${escHtml(file.name)} (${(file.size/1024).toFixed(1)}KB)`); const ld=pgRenderMsg('pgAudioMessages','assistant','transcribing...'); const model=$('pgAudioModel').value; const fd=new FormData(); fd.append('file',file); fd.append('model',model); const t0=Date.now(); try { const res=await fetch('/v1/audio/transcriptions',{method:'POST',headers:{...authHeaders()},body:fd}); const r=await res.json(); if(r.error){ld.innerHTML=`<div class="msg-role">Error</div>${escHtml(r.error.message)}`;ld.className='pg-msg system';}else{ld.innerHTML=`<div class="msg-role">Transcription</div>${escHtml(r.text||'none')}`;const ex=[];if(r.language)ex.push(r.language);if(r.duration)ex.push(r.duration+'s');$('pgAudioMeta').innerHTML=`<span>${escHtml(model)}</span>${ex.map(e=>`<span>${e}</span>`).join('')}<span>${Date.now()-t0}ms</span>`;} }catch(e){ld.innerHTML=`<div class="msg-role">Error</div>${escHtml(e.message)}`;ld.className='pg-msg system';} $('pgAudioFile').value=''; }
+
+// ── Logs ──
+async function loadLogs() { try { let url=`/api/logs?days=${$('logDays').value}&limit=200`; if($('logLevel').value)url+=`&level=${$('logLevel').value}`; if($('logCat').value)url+=`&cat=${$('logCat').value}`; const r=await fetch(url); const d=await r.json(); const c=$('logEntries'); if(!d.entries?.length){c.innerHTML='<div class="empty">no entries</div>';return;} c.innerHTML=d.entries.map(e=>{const time=new Date(e.ts).toLocaleString();const lb=e.level==='error'?'error':e.level==='warn'?'warn':'ok';const meta=Object.entries(e).filter(([k])=>!['ts','level','cat','msg'].includes(k));const detail=meta.length?JSON.stringify(Object.fromEntries(meta),null,2):'';return`<div class="log-entry" onclick="this.classList.toggle('expanded')"><div class="log-header"><span class="badge badge-sm ${lb}">${e.level}</span><span class="log-cat badge badge-sm info">${escHtml(e.cat)}</span><span class="log-time">${time}</span></div><div class="log-msg">${escHtml(e.msg)}</div>${detail?`<div class="log-detail">${escHtml(detail)}</div>`:''}</div>`;}).join(''); }catch(e){$('logEntries').innerHTML=`<div class="empty">${escHtml(e.message)}</div>`;} }
+
+// ── Auth ──
+let sessionKey='';
+async function checkAuth(){try{const r=await fetch('/api/usage');return r.ok;}catch{return false;}}
+async function login(){const key=$('loginKey').value.trim();if(!key)return;sessionKey=key;try{const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key})});if(r.ok){$('loginOverlay').style.display='none';init();}else{$('loginErr').textContent='invalid key';sessionKey='';}}catch{$('loginErr').textContent='connection failed';}}
+async function logout(){await fetch('/api/logout',{method:'POST'});sessionKey='';location.reload();}
+$('loginKey').addEventListener('keydown',e=>{if(e.key==='Enter')login();});
+
+async function init() { refreshUsage(); refreshWallet(); refreshModels(); refreshKeys(); setInterval(refreshUsage,5000); setInterval(refreshWallet,30000); setInterval(()=>{if($('page-logs').classList.contains('active'))loadLogs();},10000); window.addEventListener('resize',()=>{if(usageData?.hourly)drawChart(usageData.hourly);}); }
+(async()=>{if(await checkAuth()){$('loginOverlay').style.display='none';init();}else{$('loginOverlay').style.display='flex';}})();
+</script>
+</body>
+</html>
