@@ -6,7 +6,6 @@
 
 <h1 align="center">0G Compute Adapter</h1>
 
-<h3 align="center"><p><b>Note</b>: Not in anyway this repo is associated with Official 0G, its basically I love the low compute inference cost so i had to contribute, so people can use it more</p></h3>
 
 <p align="center">
   <strong>Cut your AI coding costs by up to 90% — use 0G models in Cursor, Claude Code, Aider, and more</strong>
@@ -16,6 +15,7 @@
   Drop-in OpenAI-compatible proxy that routes your AI dev tools through the <a href="https://0g.ai">0G Network</a>, where models like GLM-5, DeepSeek V3, and GPT-OSS cost a fraction of what you pay today. Same tools, same workflow, massively lower bill.
 </p>
 
+<h5 align="center"><p><b>Note</b>: Not in anyway this repo is associated with Official 0G, its basically I love the low compute inference cost so i had to contribute, so people can use it more</p></h5>
 
 
 <p align="center">
