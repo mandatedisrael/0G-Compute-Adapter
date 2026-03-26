@@ -9,6 +9,7 @@
  *   curl http://localhost:8000/v1/chat/completions ...
  */
 
+import 'dotenv/config';
 import express from 'express';
 import { ethers } from 'ethers';
 import { createZGComputeNetworkBroker } from '@0glabs/0g-serving-broker';
@@ -43,7 +44,8 @@ function log(level, category, message, meta = {}) {
 // ── Config ───────────────────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 8000;
-const RPC_URL = process.env.OG_RPC_URL || 'https://evmrpc.0g.ai';
+// const RPC_URL = process.env.OG_RPC_URL || 'https://evmrpc-testnet.0g.ai'; Testnet
+const RPC_URL = process.env.OG_RPC_URL || 'https://evmrpc.0g.ai'; // mainnet
 const PRIVATE_KEY = process.env.OG_PRIVATE_KEY;
 const ADMIN_KEY = process.env.OG_ADMIN_KEY || randomUUID();
 
@@ -104,9 +106,28 @@ class OGBroker {
     const services = await this.broker.inference.listService();
     this.models.clear();
 
+    // Health-check providers: only register reachable ones
+    const reachable = new Set();
+    const unreachable = new Set();
+    await Promise.all(services.map(async (svc) => {
+      const [providerAddr, , endpoint] = svc;
+      if (reachable.has(providerAddr) || unreachable.has(providerAddr)) return;
+      try {
+        const resp = await fetch(`${endpoint}/v1/quote`, { signal: AbortSignal.timeout(5000) });
+        if (resp.ok) reachable.add(providerAddr);
+        else unreachable.add(providerAddr);
+      } catch {
+        unreachable.add(providerAddr);
+      }
+    }));
+
+    if (unreachable.size > 0) {
+      console.log(`Skipped ${unreachable.size} unreachable provider(s)`);
+    }
+
     for (const svc of services) {
       const [providerAddr, serviceType, endpoint, , , , modelName] = svc;
-      // Skip if we already have this model (first provider wins)
+      if (!reachable.has(providerAddr)) continue;
       const shortName = modelName.split('/').pop().toLowerCase();
       if (!this.models.has(shortName)) {
         this.models.set(shortName, {
@@ -838,6 +859,17 @@ async function main() {
       const toolChoice = body.tool_choice || 'auto';
       const responseFormat = body.response_format;
 
+      // Normalize content arrays: flatten text-only arrays back to plain strings
+      messages = messages.map(m => {
+        if (Array.isArray(m.content)) {
+          const hasMedia = m.content.some(c => c.type === 'image_url' || c.type === 'audio' || c.type === 'video');
+          if (!hasMedia) {
+            return { ...m, content: m.content.filter(c => c.type === 'text').map(c => c.text).join('\n') };
+          }
+        }
+        return m;
+      });
+
       const lastMsg = messages[messages.length - 1];
       log('info', 'request', `${reqId} ${modelName}`, {
         stream,
@@ -918,7 +950,7 @@ async function main() {
         model: ogModel,
         messages,
         stream: stream && !hasTools && !forceJson, // only stream if no post-processing needed
-        max_tokens: body.max_tokens || 60000, // High default for reasoning models + long outputs
+        ...(body.max_tokens ? { max_tokens: body.max_tokens } : {}),
       };
       for (const k of ['temperature', 'top_p', 'frequency_penalty', 'presence_penalty', 'stop']) {
         if (body[k] !== undefined) ogBody[k] = body[k];
@@ -1511,7 +1543,7 @@ async function main() {
         model: ogModel,
         messages,
         stream: stream && !hasTools,
-        max_tokens: openAIBody.max_tokens || 60000,
+        ...(openAIBody.max_tokens ? { max_tokens: openAIBody.max_tokens } : {}),
       };
       for (const k of ['temperature', 'top_p', 'stop']) {
         if (openAIBody[k] !== undefined) ogBody[k] = openAIBody[k];
