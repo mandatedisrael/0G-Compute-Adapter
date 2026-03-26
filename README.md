@@ -132,6 +132,34 @@ openclaw gateway
 
 OpenClaw will now route requests through the adapter to the 0G network.
 
+## Dashboard
+
+The adapter comes with a built-in admin dashboard at `http://localhost:8000`. Log in with your API key or admin key.
+
+<p align="center">
+  <img src="assets/screenshots/dashboard.png" alt="Dashboard — real-time stats, usage chart, per-model breakdown" width="900"/>
+</p>
+
+**Models** — Browse all auto-discovered models from the 0G network
+
+<p align="center">
+  <img src="assets/screenshots/modelslist.jpg" alt="Models — auto-discovered with capability badges" width="900"/>
+</p>
+
+**Playground** — Test any model directly with streaming, tool calling, and vision
+
+<p align="center">
+  <img src="assets/screenshots/playground.png" alt="Playground — test chat, vision, image generation" width="900"/>
+</p>
+
+**Logs** — Searchable persistent logs with level and category filters
+
+<p align="center">
+  <img src="assets/screenshots/Logs.png" alt="Logs — searchable persistent log viewer" width="900"/>
+</p>
+
+> Dashboard built by [@claraverse-space](https://github.com/claraverse-space) as part of the original [0G Compute Adapter](https://github.com/claraverse-space/0G-Compute-Adapter).
+
 ## Available Models
 
 Models are auto-discovered from the 0G network and refreshed every 5 minutes. Unreachable providers are automatically skipped.
